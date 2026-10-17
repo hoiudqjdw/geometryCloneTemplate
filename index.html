@@ -102,6 +102,130 @@ body {
   text-shadow: 2px 2px 0 #00121e;
 }
 
+/* 연습 모드 */
+#hud.practice .progress-shell {
+  border-color: #57e0c8;
+}
+
+#hud.practice #progress-fill {
+  background: linear-gradient(90deg, #57e0c8, #89ff90);
+}
+
+#practice-bar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  padding: 8px 10px;
+  border: 3px solid #57e0c8;
+  background: rgba(6, 20, 26, 0.88);
+  box-shadow: 0 0 0 3px rgba(8, 40, 44, 0.85);
+  touch-action: manipulation;
+}
+
+#practice-bar.hidden {
+  display: none;
+}
+
+.practice-label {
+  color: #57e0c8;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  font-size: 0.85rem;
+}
+
+.practice-count {
+  color: #b5d8ff;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.practice-button {
+  border: 2px solid #57e0c8;
+  background: rgba(12, 52, 52, 0.95);
+  color: var(--text);
+  font: 700 0.9rem "Courier New", monospace;
+  padding: 10px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.practice-button.add {
+  border-color: #89ff90;
+  color: #89ff90;
+}
+
+.practice-button.remove {
+  border-color: #ff9bad;
+  color: #ff9bad;
+}
+
+.practice-button.exit {
+  border-color: #50769c;
+  color: #b5d8ff;
+}
+
+.practice-button:hover,
+.practice-button:focus-visible {
+  outline: none;
+  filter: brightness(1.25);
+}
+
+.practice-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.practice-button kbd {
+  margin-left: 4px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  font: inherit;
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.pixel-button.practice {
+  background: linear-gradient(180deg, rgba(20, 110, 100, 0.98), rgba(10, 58, 56, 0.98));
+  border-color: #57e0c8;
+}
+
+@media (max-width: 640px) {
+  #practice-bar {
+    left: 8px;
+    right: 8px;
+    transform: none;
+    max-width: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    bottom: 8px;
+    gap: 6px;
+  }
+
+  .practice-label {
+    display: none;
+  }
+
+  .practice-count {
+    order: 5;
+    width: 100%;
+    text-align: center;
+  }
+
+  .practice-button {
+    padding: 10px;
+  }
+
+  .practice-button kbd {
+    display: none;
+  }
+}
+
 #screen-root {
   position: absolute;
   inset: 0;
@@ -218,11 +342,16 @@ body {
 
 .editor-toolbar-row,
 .editor-actions,
-.editor-nudge {
+.editor-nudge,
+.rotate-row {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.rotate-row {
+  gap: 6px;
 }
 
 .editor-label {
@@ -264,19 +393,46 @@ body {
   background: rgba(76, 54, 9, 0.92);
 }
 
+.tool-button:disabled,
+.nudge-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.mode-button.move-toggle.active {
+  background: rgba(16, 84, 52, 0.95);
+  border-color: var(--success);
+  color: var(--success);
+}
+
 .editor-workspace {
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
+  grid-template-columns: minmax(0, 1fr) 240px;
   gap: 12px;
 }
 
+/* 스크롤 대신 MOVE 모드에서만 드래그로 화면 이동 */
 .editor-grid-scroll {
   min-width: 0;
-  overflow: auto;
+  min-height: 0;
+  overflow: hidden;
+  touch-action: none;
   border: 3px solid #375f85;
   background: #090f21;
-  scrollbar-color: var(--accent) #0c1730;
+  user-select: none;
+}
+
+.editor-grid-scroll.move-mode {
+  border-color: var(--success);
+}
+
+.editor-grid-scroll.move-mode .grid-cell {
+  cursor: grab;
+}
+
+.editor-grid-scroll.move-mode.panning .grid-cell {
+  cursor: grabbing;
 }
 
 .editor-grid {
@@ -287,15 +443,15 @@ body {
   background-image:
     linear-gradient(rgba(83, 209, 255, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(83, 209, 255, 0.08) 1px, transparent 1px);
-  background-size: 38px 38px;
+  background-size: 40px 40px;
 }
 
 .grid-cell {
   position: relative;
   display: grid;
   place-items: center;
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border: 0;
   border-right: 1px solid rgba(83, 209, 255, 0.16);
@@ -325,6 +481,17 @@ body {
   outline-offset: -3px;
 }
 
+.grid-cell.drag-preview {
+  background: rgba(137, 255, 144, 0.26);
+  outline: 2px dashed var(--success);
+  outline-offset: -3px;
+}
+
+.grid-cell.drag-preview.drag-erase {
+  background: rgba(255, 107, 138, 0.3);
+  outline-color: var(--danger);
+}
+
 .grid-cell small {
   position: absolute;
   left: 2px;
@@ -332,122 +499,451 @@ body {
   color: rgba(239, 248, 255, 0.5);
   font-size: 0.55rem;
   font-weight: 400;
+  z-index: 3;
+  pointer-events: none;
 }
 
+/* 8×8 픽셀 스프라이트 */
+.sprite {
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+/* 에디터 블록 그림 (회전 지원) */
 .editor-object {
-  --fx: 0;
-  --fy: 0;
   position: absolute;
-  left: 4px;
-  bottom: 4px;
-  width: 30px;
-  height: 30px;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 40px;
   z-index: 2;
   pointer-events: none;
-  transform: translate(calc(var(--fx) * 38px), calc(var(--fy) * -38px));
+  transform-origin: 50% 50%;
   filter: drop-shadow(2px 3px 0 rgba(0, 0, 0, 0.35));
 }
 
-.object-dieBlock {
-  border: 3px solid #6fd5ff;
-  background:
-    linear-gradient(45deg, rgba(255,255,255,0.2) 25%, transparent 25% 75%, rgba(255,255,255,0.2) 75%),
-    #355c8f;
-  background-size: 12px 12px;
-  box-shadow: inset -5px 0 rgba(0,0,0,0.2);
+/* 블록 카테고리 탭 */
+.palette-divider {
+  width: 2px;
+  align-self: stretch;
+  background: #274767;
+  margin: 0 2px;
 }
 
-.object-thorn {
-  left: 3px;
-  bottom: 3px;
-  width: 0;
-  height: 0;
-  border-left: 16px solid transparent;
-  border-right: 16px solid transparent;
-  border-bottom: 31px solid #ff9f5d;
-  filter: drop-shadow(0 3px 0 #813f29);
+.category-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 2px solid #3d6a94;
+  background: rgba(16, 36, 64, 0.95);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 8px 10px;
+  cursor: pointer;
 }
 
-.object-thorn::after {
-  content: '';
+.category-tab small {
+  color: #b5d8ff;
+  font-size: 0.7rem;
+  font-weight: 400;
+}
+
+.category-tab .caret {
+  color: #b5d8ff;
+  font-size: 0.7rem;
+}
+
+.category-tab:hover,
+.category-tab:focus-visible {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+.category-tab.has-active {
+  border-color: #8a7330;
+}
+
+.category-tab.open {
+  border-color: var(--accent);
+  background: rgba(30, 72, 112, 0.98);
+  box-shadow: 0 4px 0 -1px var(--accent);
+}
+
+.palette-items {
+  padding: 8px;
+  border: 2px solid var(--accent);
+  background: rgba(10, 26, 48, 0.92);
+}
+
+.palette-empty {
+  margin: 0;
+  color: #b5d8ff;
+  font-size: 0.82rem;
+}
+
+/* 게임에서는 안 보이는 블록 (S블록): 에디터에서 반투명 + 점선 */
+.editor-object.editor-invisible {
+  opacity: 0.55;
+  outline: 2px dashed rgba(200, 210, 230, 0.7);
+  outline-offset: -2px;
+  filter: none;
+}
+
+.tool-sprite {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
+  vertical-align: -3px;
+}
+
+/* 픽셀 디자인 편집기 */
+.design-overlay {
   position: absolute;
-  left: -3px;
-  top: 13px;
-  width: 6px;
-  height: 10px;
-  background: rgba(255,255,255,0.35);
-}
-
-.object-pad {
-  left: 3px;
-  bottom: 4px;
-  width: 32px;
-  height: 14px;
-  border: 2px solid rgba(255,255,255,0.7);
+  inset: 0;
+  z-index: 15;
   display: grid;
   place-items: center;
+  padding: 10px;
+  background: rgba(1, 4, 12, 0.84);
+}
+
+.design-panel {
+  --px-size: 40px;
+  width: min(100%, 920px);
+  max-height: 100%;
+  overflow: auto;
+  border: 3px solid var(--accent);
+  background: #0b1429;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+  padding: 14px;
+  display: grid;
+  gap: 12px;
+}
+
+.design-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.design-head h3 {
+  margin: 0;
+  color: var(--accent-2);
+  letter-spacing: 0.1em;
+}
+
+.design-types,
+.design-brushes,
+.design-swatches,
+.design-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.design-body {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.design-grid {
+  display: grid;
+  grid-template-columns: repeat(8, var(--px-size));
+  grid-template-rows: repeat(8, var(--px-size));
+  width: max-content;
+  border: 3px solid #50769c;
+  background: #050a16;
+  touch-action: none;
+  user-select: none;
+}
+
+.design-px {
+  --px: transparent;
+  width: var(--px-size);
+  height: var(--px-size);
+  padding: 0;
+  border: 0;
+  outline: 1px solid rgba(255, 255, 255, 0.08);
+  outline-offset: -1px;
+  background: var(--px);
+  cursor: crosshair;
+  position: relative;
+}
+
+.design-px.px-empty {
+  background: #050a16;
+}
+
+.design-px.px-empty::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 3px;
+  height: 3px;
+  margin: -1.5px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.design-px.px-transparent,
+.design-px.px-alpha {
+  background:
+    linear-gradient(var(--px), var(--px)),
+    repeating-conic-gradient(#3c4b68 0 25%, #1c2640 0 50%) 0 0 / 10px 10px;
+}
+
+.design-px.px-transparent {
+  box-shadow: inset 0 0 0 2px rgba(158, 240, 255, 0.55);
+}
+
+.design-grid.show-hitbox .design-px:not(.px-empty) {
+  box-shadow: inset 0 0 0 3px rgba(255, 80, 110, 0.95);
+}
+
+.design-side {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.design-side h4 {
+  margin: 2px 0 0;
+  color: #b5d8ff;
   font-size: 0.85rem;
-  font-weight: 900;
-  line-height: 1;
+  letter-spacing: 0.08em;
 }
 
-.object-jumpUp { background: #6b69ff; color: white; }
-.object-halfSpeed { background: #ffd35b; color: #654d00; }
-.object-doubleSpeed { background: #53d1ff; color: #10304f; }
-
-.object-start-cube {
-  border: 3px solid #bdf9ff;
-  background: #53d1ff;
-  box-shadow: inset 5px 5px rgba(255,255,255,0.2), inset -5px -5px rgba(13,70,109,0.45);
+.design-side p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #b5d8ff;
 }
 
-.object-start-cube::before {
-  content: '';
+.design-color {
+  width: 44px;
+  height: 36px;
+  padding: 0;
+  border: 2px solid #50769c;
+  background: #071126;
+  cursor: pointer;
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 2px solid #274767;
+  background: var(--sw);
+  cursor: pointer;
+}
+
+.swatch.active,
+.swatch:hover,
+.swatch:focus-visible {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+.design-preview {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.design-preview .sprite {
+  background-color: #10172b;
+  border: 2px solid #274767;
+}
+
+.design-code {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  border: 2px solid #50769c;
+  background: #040914;
+  color: #89ff90;
+  font: 0.78rem/1.4 "Courier New", monospace;
+  padding: 8px;
+  word-break: break-all;
+}
+
+/* 블록 테그 · 코드 */
+.tag-chip {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 5px;
+  border: 1px solid #50769c;
+  background: #071126;
+  color: #89ff90;
+  font: 700 0.68rem/1.4 "Courier New", monospace;
+  letter-spacing: 0;
+  vertical-align: 1px;
+  user-select: all;
+}
+
+.tag-chip.big {
+  font-size: 0.9rem;
+  padding: 2px 8px;
+}
+
+.tag-line {
+  margin: 0;
+  color: #b5d8ff;
+  font-size: 0.85rem;
+}
+
+.code-badge {
   position: absolute;
-  left: 5px;
-  top: 7px;
-  width: 4px;
-  height: 4px;
-  background: #17365f;
-  box-shadow: 11px 0 #17365f;
+  right: 1px;
+  top: 1px;
+  z-index: 3;
+  padding: 0 2px;
+  background: #ffda67;
+  color: #2a1d00;
+  font: 900 0.55rem/1.2 "Courier New", monospace;
+  pointer-events: none;
 }
 
-.object-start-cube::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  bottom: 5px;
-  width: 17px;
-  height: 4px;
-  background: #17365f;
+.code-mark {
+  color: var(--accent-2);
+  margin-right: 3px;
 }
 
-.object-start-airplane {
-  left: 2px;
-  bottom: 8px;
-  width: 35px;
-  height: 22px;
+.coded-tool {
+  display: inline-flex;
 }
 
-.object-start-airplane::before {
-  content: '';
-  position: absolute;
-  left: 7px;
-  top: 3px;
-  width: 17px;
-  height: 16px;
-  background: #fff;
-  border-left: 6px solid #53d1ff;
+.coded-tool .tool-button {
+  border-color: #8a7330;
 }
 
-.object-start-airplane::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  border-top: 11px solid transparent;
-  border-bottom: 11px solid transparent;
-  border-left: 15px solid #ff7a9f;
+.coded-remove {
+  border: 2px solid #8a7330;
+  border-left: 0;
+  background: rgba(60, 40, 8, 0.94);
+  color: #ffda67;
+  font: 900 0.9rem/1 "Courier New", monospace;
+  padding: 0 7px;
+  cursor: pointer;
+}
+
+.code-button:not(:disabled) {
+  border-color: #8a7330;
+  color: var(--accent-2);
+}
+
+.code-panel {
+  width: min(100%, 1040px);
+}
+
+.code-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 14px;
+  min-height: 0;
+}
+
+.code-main {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.code-input {
+  width: 100%;
+  min-height: 380px;
+  resize: vertical;
+  border: 3px solid #50769c;
+  background: #040914;
+  color: #89ff90;
+  font: 0.95rem/1.55 "Courier New", monospace;
+  padding: 12px;
+  tab-size: 4;
+  white-space: pre;
+  overflow: auto;
+}
+
+.code-help {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  max-height: 470px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.code-help h4 {
+  margin: 0 0 4px;
+  color: #b5d8ff;
+  font-size: 0.85rem;
+}
+
+.code-help-item {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  border: 1px solid #274767;
+  background: rgba(11, 27, 49, 0.94);
+  color: var(--text);
+  padding: 5px 8px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.code-help-item:hover,
+.code-help-item:focus-visible {
+  outline: none;
+  border-color: var(--accent-2);
+}
+
+.code-help-item code {
+  color: #89ff90;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.code-help-item span {
+  color: #b5d8ff;
+  font-size: 0.74rem;
+}
+
+@media (max-width: 860px) {
+  .code-body {
+    grid-template-columns: 1fr;
+  }
+
+  .code-input {
+    min-height: 240px;
+  }
+
+  .code-help {
+    max-height: 240px;
+  }
+}
+
+@media (max-width: 720px) {
+  .design-panel {
+    --px-size: min(40px, 10.5vw);
+    padding: 10px;
+  }
+
+  .design-body {
+    grid-template-columns: 1fr;
+  }
+
+  .design-grid {
+    justify-self: center;
+  }
 }
 
 .editor-close {
@@ -512,16 +1008,18 @@ body {
 .load-screen .button-row { justify-content: flex-start; }
 
 .editor-side {
+  min-height: 0;
+  overflow-y: auto;
   border: 2px solid #274767;
   background: rgba(8, 16, 34, 0.9);
   padding: 12px;
   display: grid;
   align-content: start;
-  gap: 12px;
+  gap: 10px;
 }
 
 .editor-side h3 {
-  margin: 0;
+  margin: 4px 0 0;
   font-size: 1rem;
   color: var(--accent-2);
 }
@@ -582,6 +1080,49 @@ body {
   box-shadow: 0 0 0 3px #6f5600;
 }
 
+.screen.wide {
+  width: min(94vw, 860px);
+  max-height: calc(100vh - 12px);
+  overflow-y: auto;
+}
+
+.character-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.character-grid .character-card {
+  width: 100%;
+  padding: 10px 8px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+
+.character-grid .character-card canvas {
+  width: 72px;
+  max-width: 72px;
+  margin: 0 auto 4px;
+}
+
+.character-grid .tip {
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 640px) {
+  .character-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .character-grid .character-card canvas {
+    width: 52px;
+  }
+}
+
 .character-card canvas {
   width: 100%;
   max-width: 180px;
@@ -636,16 +1177,11 @@ body {
 
   .editor-workspace {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) auto;
   }
 
   .editor-side {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .editor-side h3,
-  .editor-side .editor-status {
-    grid-column: 1 / -1;
+    max-height: 34vh;
   }
 
   .editor-label {
@@ -676,17 +1212,64 @@ body {
       </div>
     </header>
 
+    <div id="practice-bar" class="hidden" role="toolbar" aria-label="연습 모드">
+      <span class="practice-label">PRACTICE</span>
+      <button type="button" class="practice-button add" data-practice="add" title="지금 위치에 체크포인트 추가 (Z)">◆ 체크포인트 <kbd>Z</kbd></button>
+      <button type="button" class="practice-button remove" data-practice="remove" title="마지막 체크포인트 삭제 (X)">✕ 삭제 <kbd>X</kbd></button>
+      <span class="practice-count" data-practice-count>체크포인트 0 · 시도 0</span>
+      <button type="button" class="practice-button exit" data-practice="exit" title="연습 끝내기">나가기</button>
+    </div>
+
     <div id="screen-root"></div>
   </div>
 
   <script>
 /* =========================================================
-   mapGen.js  –  맵 생성 알고리즘
+   mapGen.js  –  맵 생성 알고리즘 + 도형(충돌) 유틸
    ========================================================= */
 const TILE = 40;
 const STAGE_LENGTH = 8000;
 const WORLD_HEIGHT = 540;
 const GROUND_Y = 430;
+const CEILING_Y = 150; // 볼 · 스파이더 기본 맵의 천장
+const DASH_ANGLE_LIMIT = 80; // 화살표 공점 각도 범위 -80° ~ 80°
+
+// 블록 회전 규칙: 화살표 공점은 -80° ~ 80° 안으로
+function fixBlockRotation(type, angle) {
+  const value = normalizeAngle(angle || 0);
+  if (type !== 'dashOrb') return value;
+  const signed = value > 180 ? value - 360 : value;
+  return normalizeAngle(Math.max(-DASH_ANGLE_LIMIT, Math.min(DASH_ANGLE_LIMIT, signed)));
+}
+
+/*
+  게임 모드 (캐릭터)
+    id     : 내부 이름
+    code   : 맵 코드 이름 → startMode(Code), 포털 블록 mode{Code}, 스프라이트 start{Code}
+    stage  : 기본 스테이지 맵 종류 (cube = 바닥 장애물, ship = 터널, gravity = 바닥+천장 통로)
+*/
+const MODES = [
+  { id: 'cube', code: 'Cube', label: 'CUBE', stage: 'cube', desc: '클릭하면 점프' },
+  { id: 'ship', code: 'Airplane', label: 'SHIP', stage: 'ship', desc: '누르고 있으면 상승' },
+  { id: 'ball', code: 'Ball', label: 'BALL', stage: 'gravity', desc: '클릭하면 중력 반전' },
+  { id: 'ufo', code: 'Ufo', label: 'UFO', stage: 'cube', desc: '클릭마다 공중 도약' },
+  { id: 'wave', code: 'Wave', label: 'WAVE', stage: 'ship', desc: '누르면 ↗ 떼면 ↘' },
+  { id: 'robot', code: 'Robot', label: 'ROBOT', stage: 'cube', desc: '오래 누를수록 높이 점프' },
+  { id: 'spider', code: 'Spider', label: 'SPIDER', stage: 'gravity', desc: '클릭하면 반대 면으로 순간 이동' },
+  { id: 'swing', code: 'Swing', label: 'SWING', stage: 'ship', desc: '누르면 위로, 떼면 아래로 중력' },
+];
+const MODE_BY_ID = Object.fromEntries(MODES.map((mode) => [mode.id, mode]));
+const MODE_BY_CODE = Object.fromEntries(MODES.map((mode) => [mode.code, mode]));
+const PORTAL_TYPES = MODES.map((mode) => `mode${mode.code}`);
+const FLYING_MODES = new Set(['ship', 'wave', 'swing']);
+const GRAVITY_MODES = new Set(['ball', 'spider', 'swing']);
+const characterSpriteKey = (character) => `start${(MODE_BY_ID[character] || MODES[0]).code}`;
+
+// blockSpecial(type, x, y, angle) 로 회전할 수 있는 블록
+// blockSpecial / rot() 로 회전할 수 있는 블록 (start 제외 전부, 히트박스도 같이 회전)
+const ROTATABLE_TYPES = new Set(['dieBlock', 'square', 'slope', 'thorn', 'jumpUp', 'nextJump', 'greenOrb', 'blackOrb', 'dashOrb', 'sBlock', 'halfSpeed', 'doubleSpeed', ...PORTAL_TYPES]);
+// 이 기울기(|dy/dx|)보다 가파른 면은 밟지 못하고 벽 취급
+const MAX_WALKABLE_GRAD = 1.25;
 
 const CUBE_PATTERNS = [
   'singleSpike',
@@ -740,6 +1323,113 @@ class SeededRandom {
   }
 }
 
+/* ---------- 도형 유틸 ---------- */
+function normalizeAngle(value) {
+  const rounded = Math.round(Number(value) * 10) / 10;
+  const wrapped = Math.round((((rounded % 360) + 360) % 360) * 10) / 10;
+  return wrapped >= 360 ? 0 : wrapped;
+}
+
+function rectPoints(x, y, w, h) {
+  return [
+    { x, y },
+    { x: x + w, y },
+    { x: x + w, y: y + h },
+    { x, y: y + h },
+  ];
+}
+
+// 화면 기준 시계 방향 회전 (캔버스 / CSS rotate 와 같은 방향)
+function rotatePoints(points, cx, cy, deg) {
+  if (!deg) return points.map((point) => ({ ...point }));
+  const rad = (deg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+  const round = (value) => Math.round(value * 1000) / 1000;
+  return points.map(({ x, y }) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    return { x: round(cx + dx * cos - dy * sin), y: round(cy + dx * sin + dy * cos) };
+  });
+}
+
+function scalePoints(points, factor) {
+  const cx = points.reduce((sum, p) => sum + p.x, 0) / points.length;
+  const cy = points.reduce((sum, p) => sum + p.y, 0) / points.length;
+  return points.map(({ x, y }) => ({ x: cx + (x - cx) * factor, y: cy + (y - cy) * factor }));
+}
+
+function polygonBounds(points) {
+  const xs = points.map((p) => p.x);
+  const ys = points.map((p) => p.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return { x: minX, y: minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+}
+
+function polyShape(type, points, extra = {}) {
+  return { type, points, ...polygonBounds(points), ...extra };
+}
+
+function projectPolygon(points, ax, ay) {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const p of points) {
+    const value = p.x * ax + p.y * ay;
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+  return { min, max };
+}
+
+// 볼록 다각형 SAT 충돌 판정
+function polygonsOverlap(a, b) {
+  for (const poly of [a, b]) {
+    for (let i = 0; i < poly.length; i += 1) {
+      const p1 = poly[i];
+      const p2 = poly[(i + 1) % poly.length];
+      const ax = -(p2.y - p1.y);
+      const ay = p2.x - p1.x;
+      if (ax === 0 && ay === 0) continue;
+      const pa = projectPolygon(a, ax, ay);
+      const pb = projectPolygon(b, ax, ay);
+      if (pa.max <= pb.min || pb.max <= pa.min) return false;
+    }
+  }
+  return true;
+}
+
+// x 위치에서 다각형 윗면(top) 또는 아랫면(bottom)의 높이와 기울기
+function polyEdgeAt(points, x, which) {
+  let best = null;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    if (a.x === b.x) continue;
+    if (x < Math.min(a.x, b.x) || x > Math.max(a.x, b.x)) continue;
+    const t = (x - a.x) / (b.x - a.x);
+    const y = a.y + t * (b.y - a.y);
+    const grad = (b.y - a.y) / (b.x - a.x);
+    if (!best || (which === 'top' ? y < best.y : y > best.y)) best = { y, grad };
+  }
+  return best;
+}
+
+// 캐릭터 발판 구간 [x1, x2] 아래(위)의 가장 높은(낮은) 면
+function surfaceUnder(points, x1, x2, which = 'top') {
+  const better = which === 'top' ? (a, b) => a < b : (a, b) => a > b;
+  let best = null;
+  for (const sx of [x1, (x1 + x2) / 2, x2]) {
+    const hit = polyEdgeAt(points, sx, which);
+    if (hit && (!best || better(hit.y, best.y))) best = hit;
+  }
+  for (const p of points) {
+    if (p.x > x1 && p.x < x2 && (!best || better(p.y, best.y))) best = { y: p.y, grad: 0 };
+  }
+  return best;
+}
+
+/* ---------- 테마 / 배경 ---------- */
 function buildStageTheme(stageNumber, character) {
   const themes = [
     {
@@ -877,6 +1567,7 @@ function generateCubeMap(rng, stageNumber) {
     type: 'cube',
     groundY: GROUND_Y,
     obstacles,
+    solids: [],
     pads,
     length: STAGE_LENGTH,
     baseSpeed: 300 + difficulty * 18,
@@ -932,6 +1623,7 @@ function generateShipMap(rng, stageNumber) {
     type: 'ship',
     groundY: GROUND_Y,
     obstacles,
+    solids: [],
     pads,
     length: STAGE_LENGTH,
     baseSpeed: 286 + difficulty * 16,
@@ -939,70 +1631,1213 @@ function generateShipMap(rng, stageNumber) {
   };
 }
 
+// 볼 · 스파이더: 바닥과 천장 사이 통로. 바닥 장애물이면 천장으로, 천장 장애물이면 바닥으로
+function generateGravityMap(rng, stageNumber) {
+  const obstacles = [];
+  const difficulty = stageNumber - 1;
+  let x = 560;
+  let lastSide = null;
+
+  while (x < STAGE_LENGTH - 650) {
+    const side = rng.chance(0.5) ? 'floor' : 'ceiling';
+    // 반대쪽으로 옮겨야 하면 이동할 시간을 넉넉히
+    x += side === lastSide ? rng.int(110, 190) : rng.int(310, 380) - difficulty * 14;
+    if (rng.chance(0.3)) {
+      const height = rng.int(40, 64 + difficulty * 6);
+      obstacles.push(side === 'floor'
+        ? obstacleRect('block', x, GROUND_Y - height, 40, height)
+        : obstacleRect('block', x, CEILING_Y, 40, height));
+      x += 40;
+    } else {
+      const count = rng.int(1, Math.min(4, 2 + difficulty));
+      for (let i = 0; i < count; i += 1) {
+        obstacles.push(side === 'floor'
+          ? obstacleRect('spikeUp', x + i * 26, GROUND_Y - 30, 28, 30)
+          : obstacleRect('spikeDown', x + i * 26, CEILING_Y, 28, 30));
+      }
+      x += count * 26 + 2;
+    }
+    lastSide = side;
+  }
+
+  return {
+    type: 'gravity',
+    groundY: GROUND_Y,
+    ceilingY: CEILING_Y,
+    obstacles,
+    solids: [],
+    pads: [],
+    length: STAGE_LENGTH,
+    baseSpeed: 290 + difficulty * 14,
+  };
+}
+
 function generateStageMap({ stageNumber, character, sessionSeed }) {
   const seed = hashString(`${sessionSeed}-${character}-${stageNumber}`);
   const rng = new SeededRandom(seed);
-  const base = character === 'ship' ? generateShipMap(rng, stageNumber) : generateCubeMap(rng, stageNumber);
+  const stageType = MODE_BY_ID[character]?.stage || 'cube';
+  const base = stageType === 'ship'
+    ? generateShipMap(rng, stageNumber)
+    : stageType === 'gravity'
+    ? generateGravityMap(rng, stageNumber)
+    : generateCubeMap(rng, stageNumber);
 
   return {
     ...base,
     stageNumber,
     character,
     seed,
+    custom: false,
     theme: buildStageTheme(stageNumber, character),
     stars: createStars(rng, STAGE_LENGTH, buildStageTheme(stageNumber, character)),
   };
 }
 
-function buildCustomWorld(spec) {
-  const character = spec.startMode === 'Airplane' ? 'ship' : 'cube';
-  const start = spec.blocks.find((block) => block.type === 'start');
-  const obstacles = [];
-  const pads = [];
+// 블록 종류별 동작 (모양·히트박스는 8×8 픽셀 디자인이 결정)
+const PAD_BEHAVIORS = {
+  jumpUp: { type: 'jump', power: 760 },
+  halfSpeed: { type: 'slow', multiplier: 0.5, duration: 2.8 },
+  doubleSpeed: { type: 'boost', multiplier: 2, duration: 2.2 },
+  nextJump: { type: 'orb' },
+  greenOrb: { type: 'orbGreen' },
+  blackOrb: { type: 'orbBlack' },
+  dashOrb: { type: 'orbDash' },
+  sBlock: { type: 'dashStop' },
+  ...Object.fromEntries(MODES.map((mode) => [`mode${mode.code}`, { type: 'portal', mode: mode.id }])),
+};
 
-  spec.blocks.forEach((block, index) => {
-    if (block.type === 'start') return;
-    const x = block.x * TILE;
-    if (block.type === 'dieBlock') {
-      obstacles.push(obstacleRect('block', x, GROUND_Y - (block.y + 1) * TILE, TILE, TILE));
-    } else if (block.type === 'thorn') {
-      obstacles.push(obstacleRect('spikeUp', x + 5, GROUND_Y - block.y * TILE - 30, 30, 30));
-    } else if (block.type === 'jumpUp') {
-      pads.push(padRect('jump', x, GROUND_Y - block.y * TILE - 16, 40, 16, { id: `custom-jump-${index}`, power: 760 }));
-    } else if (block.type === 'halfSpeed') {
-      pads.push(padRect('slow', x, GROUND_Y - block.y * TILE - 18, 40, 18, { id: `custom-slow-${index}`, multiplier: 0.5, duration: 2.8 }));
-    } else if (block.type === 'doubleSpeed') {
-      pads.push(padRect('boost', x, GROUND_Y - block.y * TILE - 18, 40, 18, { id: `custom-boost-${index}`, multiplier: 2, duration: 2.2 }));
+// 커스텀 맵의 블록 종류(테그) 목록: 기본 10종 + 맵 코드의 design(...) 정의
+function buildRuntimeKinds(specKinds = {}) {
+  const kinds = DESIGN_TYPES.map((type) => {
+    const design = specKinds[type]?.design || DEFAULT_DESIGNS[type];
+    return { name: type, type, design, tag: kindTag(type, design) };
+  });
+  Object.values(specKinds).forEach((kind) => {
+    if (kind.name === kind.type) return;
+    kinds.push({ name: kind.name, type: kind.type, design: kind.design, tag: kind.name });
+  });
+  return kinds;
+}
+
+function resolveRuntimeKind(world, text) {
+  const key = String(text).trim();
+  const lower = key.toLowerCase();
+  return world.kinds.find((kind) => kind.tag === key)
+    || world.kinds.find((kind) => kind.name === key)
+    || world.kinds.find((kind) => kind.tag.toLowerCase() === lower || kind.name.toLowerCase() === lower)
+    || null;
+}
+
+// 블록 위치·회전·디자인이 바뀌면 히트박스와 스프라이트를 다시 계산
+function refreshRuntimeBlock(block) {
+  const x = block.x * TILE;
+  const top = GROUND_Y - (block.y + 1) * TILE;
+  block.cx = x + TILE / 2;
+  block.cy = top + TILE / 2;
+  block.parts = designParts(block.design, x, top, block.rotation);
+  block.bounds = block.parts.length ? polygonBounds(block.parts.flat()) : null;
+  block.sprite = getSpriteCanvas(block.design);
+  block.dirty = false;
+}
+
+function rebuildWorldLists(world) {
+  const obstacles = [];
+  const solids = [];
+  const pads = [];
+  const decor = [];
+  world.blocks.forEach((block) => {
+    if (block.dirty) refreshRuntimeBlock(block);
+    if (block.hidden) return; // 사라진 블록은 안 보이고 히트박스도 없음
+    decor.push(block);
+    if (!block.bounds) return;
+    if (block.type === 'dieBlock' || block.type === 'thorn') {
+      obstacles.push({ type: 'pixelHazard', parts: block.parts, ...block.bounds, owner: block });
+    } else if (block.type === 'square' || block.type === 'slope') {
+      block.parts.forEach((points) => solids.push(polyShape('solidPart', points, { kind: block.type, owner: block })));
+    } else if (PAD_BEHAVIORS[block.type]) {
+      pads.push({ ...PAD_BEHAVIORS[block.type], id: block.id, parts: block.parts, cx: block.cx, cy: block.cy, ...block.bounds, owner: block });
     }
   });
+  world.obstacles = obstacles;
+  world.solids = solids;
+  world.pads = pads;
+  world.decor = decor;
+  world.listsDirty = false;
+}
 
+function markBlockDirty(block) {
+  block.dirty = true;
+  if (app.world) app.world.listsDirty = true;
+}
+
+function buildCustomWorld(spec) {
+  const character = MODE_BY_CODE[spec.startMode]?.id || 'cube';
+  const start = spec.blocks.find((block) => block.type === 'start');
+  // 이보다 위로 날아가면 사망 (가장 높은 블록보다 8칸 위, 최소 바닥에서 12칸)
+  const highestRow = spec.blocks.reduce((max, block) => Math.max(max, block.y), 0);
+  const topLimit = GROUND_Y - (Math.max(12, highestRow + 9)) * TILE;
   const clearWorldX = spec.clearX * TILE;
   const startWorldX = start.x * TILE;
   const length = Math.max(clearWorldX, startWorldX + TILE);
-  const seed = hashString(buildMapCode({ startMode: spec.startMode, blocks: spec.blocks, clearX: spec.clearX }));
+  const seed = hashString(JSON.stringify({ m: spec.startMode, b: spec.blocks, c: spec.clearX, k: spec.kinds }));
   const rng = new SeededRandom(seed);
   const theme = buildStageTheme(2, character);
+  const kinds = buildRuntimeKinds(spec.kinds);
 
-  return {
+  const world = {
     type: character,
     character,
+    custom: true,
     stageNumber: 'CUSTOM',
     groundY: GROUND_Y,
-    obstacles,
-    pads,
+    obstacles: [],
+    solids: [],
+    pads: [],
+    decor: [],
+    kinds,
+    blocks: [],
+    scripts: [],
+    globals: new Map(),
+    disabledKeys: {},
+    scriptErrors: [],
+    time: 0,
+    listsDirty: true,
     length,
     startWorldX,
     startGridY: start.y,
     clearWorldX,
     baseSpeed: character === 'ship' ? 286 : 300,
     recommendedJumpVelocity: -610,
+    topLimit,
     thrust: 1460,
     seed,
     theme,
     stars: createStars(rng, Math.max(length, 960), theme),
   };
+
+  spec.blocks.forEach((item, index) => {
+    if (item.type === 'start') return;
+    const kind = kinds.find((candidate) => candidate.name === item.name)
+      || kinds.find((candidate) => candidate.name === item.type);
+    const block = {
+      id: `b${index}`,
+      kind,
+      type: kind.type,
+      design: [...kind.design],
+      x: item.x,
+      y: item.y,
+      rotation: item.rotation || 0,
+      ghost: 0,          // 투명도 0~100
+      hidden: false,
+      jumped: false,     // 이 블록 위에서 점프했는지 (jump 조건)
+      vars: new Map(),
+      dirty: true,
+      hasCode: Boolean(item.code && item.code.trim()),
+    };
+    world.blocks.push(block);
+    if (block.hasCode) {
+      world.scripts.push(createScriptRuntime(block, world, compileScript(item.code)));
+    }
+  });
+
+  rebuildWorldLists(world);
+  return world;
 }
 
+/* =========================================================
+   sprites.js  –  8×8 픽셀 디자인 · 히트박스
+   ---------------------------------------------------------
+   픽셀 하나 = #hex 토큰 하나 (위쪽 줄부터 왼→오, 64개)
+     #rrggbb / #rgb / #rrggbbaa : 색이 있는 픽셀 (히트박스 O)
+     #00000000 (알파 00)        : 투명 픽셀   (히트박스 O, 안 보임)
+     #                          : 빈 픽셀     (히트박스 X)
+   ========================================================= */
+const DESIGN_SIZE = 8;
+const EMPTY_PX = '#';
+const TRANSPARENT_PX = '#00000000';
+
+function designFromRows(rows, palette) {
+  return rows.join('').split('').map((ch) => {
+    if (ch === '.') return EMPTY_PX;
+    if (ch === 'T') return TRANSPARENT_PX;
+    return palette[ch];
+  });
+}
+
+// 모드 포털 디자인: 테두리 색 + 가운데 4×4 무늬 (가운데는 투명 = 히트박스 있음)
+function portalDesign(color, inner, glyph) {
+  const rows = [
+    '..PPPP..',
+    '.PTTTTP.',
+    ...glyph.map((row) => `PT${row.replace(/\./g, 'T')}TP`),
+    '.PTTTTP.',
+    '..PPPP..',
+  ];
+  return designFromRows(rows, { P: color, i: inner });
+}
+
+function portalDesigns() {
+  return {
+    modeBall: portalDesign('#ff9f43', '#ffe0b8', ['.ii.', 'iiii', 'iiii', '.ii.']),
+    modeUfo: portalDesign('#b26bff', '#e7d2ff', ['....', '.ii.', 'iiii', 'i..i']),
+    modeWave: portalDesign('#53d1ff', '#e6fbff', ['....', 'i.i.', '.i.i', '....']),
+    modeRobot: portalDesign('#ffd35b', '#fff2a6', ['iiii', '.ii.', 'iiii', 'i..i']),
+    modeSpider: portalDesign('#ff5e7e', '#ffd0da', ['i..i', '.ii.', '.ii.', 'i..i']),
+    modeSwing: portalDesign('#9dff5e', '#eaffd6', ['.ii.', 'i..i', 'i..i', '.ii.']),
+  };
+}
+
+const DEFAULT_DESIGNS = {
+  dieBlock: designFromRows([
+    'LLLLLLLL',
+    'LBBBBBBL',
+    'LBXBBXBL',
+    'LBBXXBBL',
+    'LBBXXBBL',
+    'LBXBBXBL',
+    'LBBBBBBL',
+    'LLLLLLLL',
+  ], { L: '#6fd5ff', B: '#355c8f', X: '#9fe6ff' }),
+  square: designFromRows([
+    'HHHHHHHH',
+    'GgGgGgGd',
+    'GGGGGGGd',
+    'GgGgGgGd',
+    'GGGGGGGd',
+    'GgGgGgGd',
+    'GGGGGGGd',
+    'dddddddd',
+  ], { H: '#b6ffd5', G: '#2f7d5b', g: '#3f9a71', d: '#1f5a40' }),
+  slope: designFromRows([
+    '.......L',
+    '......LP',
+    '.....LPP',
+    '....LPpP',
+    '...LPPPP',
+    '..LPpPPP',
+    '.LPPPPpP',
+    'LPPPPPPP',
+  ], { L: '#a9a6ff', P: '#4b4ab0', p: '#3b3a92' }),
+  thorn: designFromRows([
+    '...OO...',
+    '...OO...',
+    '..OWOO..',
+    '..OWOO..',
+    '.OOWOOO.',
+    '.OOOOOO.',
+    'OOOOOOOO',
+    'DDDDDDDD',
+  ], { O: '#ff9f5d', W: '#ffd2ad', D: '#813f29' }),
+  jumpUp: designFromRows([
+    '........',
+    '........',
+    '........',
+    '........',
+    '........',
+    'KJJAAJJK',
+    'JJAAAAJJ',
+    'JJJJJJJJ',
+  ], { J: '#6b69ff', A: '#f5fbff', K: '#a6d7ff' }),
+  nextJump: designFromRows([
+    '..OOOO..',
+    '.OOOOOO.',
+    'OOWWOOOO',
+    'OOWWOOOO',
+    'OOOOOOdO',
+    'OOOOOOdO',
+    '.OOddOO.',
+    '..OOOO..',
+  ], { O: '#ffe04d', W: '#fff7c2', d: '#d6a800' }),
+  greenOrb: designFromRows([
+    '..OOOO..',
+    '.OOOOOO.',
+    'OOWWOOOO',
+    'OOWWOOOO',
+    'OOOOOOdO',
+    'OOOOOOdO',
+    '.OOddOO.',
+    '..OOOO..',
+  ], { O: '#5dff7a', W: '#e0ffe6', d: '#1f9a3a' }),
+  blackOrb: designFromRows([
+    '..RRRR..',
+    '.RKKKKR.',
+    'RKWWKKKR',
+    'RKWWKKKR',
+    'RKKKKKKR',
+    'RKKKKKKR',
+    '.RKKKKR.',
+    '..RRRR..',
+  ], { R: '#ff3d6e', K: '#14141c', W: '#55556a' }),
+  // 화살표 공점: 기본은 → 방향, 회전한 방향으로 돌진
+  dashOrb: designFromRows([
+    '..BBBB..',
+    '.BBBWBB.',
+    'BBBBWWBB',
+    'BWWWWWWB',
+    'BWWWWWWB',
+    'BBBBWWBB',
+    '.BBBWBB.',
+    '..BBBB..',
+  ], { B: '#ff7ad9', W: '#ffffff' }),
+  // S블록: 게임 화면에서는 보이지 않음 (에디터에서만 표시). 칸 전체가 히트박스
+  sBlock: designFromRows([
+    'TTGGGGTT',
+    'TGGTTGGT',
+    'TGGTTTTT',
+    'TTGGGGTT',
+    'TTTTTGGT',
+    'TGGTTGGT',
+    'TTGGGGTT',
+    'TTTTTTTT',
+  ], { G: '#c8d2e6' }),
+  halfSpeed: designFromRows([
+    '........',
+    '........',
+    '........',
+    '........',
+    'ZZZZZZZZ',
+    'YYyYYyYY',
+    'YyYYyYYY',
+    'YYyYYyYY',
+  ], { Z: '#fff2a6', Y: '#ffd35b', y: '#654d00' }),
+  doubleSpeed: designFromRows([
+    '........',
+    '........',
+    '........',
+    '........',
+    'QQQQQQQQ',
+    'CcCCcCCC',
+    'CCcCCcCC',
+    'CcCCcCCC',
+  ], { Q: '#d6ffff', C: '#53d1ff', c: '#10304f' }),
+  modeCube: designFromRows([
+    '..GGGG..',
+    '.GTTTTG.',
+    'GTTTTTTG',
+    'GTTggTTG',
+    'GTTggTTG',
+    'GTTTTTTG',
+    '.GTTTTG.',
+    '..GGGG..',
+  ], { G: '#57ff8a', g: '#b9ffcf' }),
+  modeAirplane: designFromRows([
+    '..PPPP..',
+    '.PTTTTP.',
+    'PTpTTTTP',
+    'PTppTTTP',
+    'PTppTTTP',
+    'PTpTTTTP',
+    '.PTTTTP.',
+    '..PPPP..',
+  ], { P: '#ff78cb', p: '#ffffff' }),
+  ...portalDesigns(),
+  // 캐릭터 (모양만, 히트박스는 캐릭터 크기 고정)
+  startCube: designFromRows([
+    'LLLLLLLL',
+    'LCCCCCCL',
+    'LCECCECL',
+    'LCCCCCCL',
+    'LCCCCCCL',
+    'LCEEEECL',
+    'LCCCCCCL',
+    'LLLLLLLL',
+  ], { L: '#bdf9ff', C: '#53d1ff', E: '#17365f' }),
+  startAirplane: designFromRows([
+    '........',
+    '....PP..',
+    '.BWWWPP.',
+    'YBWWWWPP',
+    'YBWWWWPP',
+    '.BWWWPP.',
+    '....PP..',
+    '........',
+  ], { W: '#ffffff', B: '#53d1ff', P: '#ff7a9f', Y: '#ffda67' }),
+  startBall: designFromRows([
+    '..OOOO..',
+    '.OWOOWO.',
+    'OOOWWOOO',
+    'OOWWWWOO',
+    'OOWWWWOO',
+    'OOOWWOOO',
+    '.OWOOWO.',
+    '..OOOO..',
+  ], { O: '#ff9f43', W: '#ffe0b8' }),
+  startUfo: designFromRows([
+    '........',
+    '...GG...',
+    '..GWWG..',
+    '.PPPPPP.',
+    'PPYPPYPP',
+    '.PPPPPP.',
+    '..P..P..',
+    '........',
+  ], { G: '#9ef0ff', W: '#ffffff', P: '#b26bff', Y: '#ffe04d' }),
+  startWave: designFromRows([
+    '........',
+    'CC......',
+    'CWCC....',
+    'CWWWCC..',
+    'CWWWCC..',
+    'CWCC....',
+    'CC......',
+    '........',
+  ], { C: '#53d1ff', W: '#e6fbff' }),
+  startRobot: designFromRows([
+    '.YYYYYY.',
+    '.YEYYEY.',
+    '.YYYYYY.',
+    '..BBBB..',
+    '.BBBBBB.',
+    '.BB..BB.',
+    '.BB..BB.',
+    '.KK..KK.',
+  ], { Y: '#ffd35b', E: '#17365f', B: '#6b8cff', K: '#2b3b6f' }),
+  startSpider: designFromRows([
+    'R......R',
+    '.R.RR.R.',
+    '..RRRR..',
+    'RRRWRWRR',
+    '..RRRR..',
+    '.R.RR.R.',
+    'R......R',
+    '........',
+  ], { R: '#ff5e7e', W: '#ffffff' }),
+  startSwing: designFromRows([
+    '..SSSS..',
+    '.SWWWWS.',
+    'SWSSSSWS',
+    'SWSKKSWS',
+    'SWSKKSWS',
+    'SWSSSSWS',
+    '.SWWWWS.',
+    '..SSSS..',
+  ], { S: '#9dff5e', W: '#eaffd6', K: '#2f5a12' }),
+};
+
+// 디자인 편집기에서 바꿀 수 있는 블록 (start 제외)
+const DESIGN_TYPES = ['dieBlock', 'square', 'slope', 'thorn', 'jumpUp', 'nextJump', 'greenOrb', 'blackOrb', 'dashOrb', 'sBlock', 'halfSpeed', 'doubleSpeed', ...PORTAL_TYPES];
+
+function normalizePixelToken(raw) {
+  const token = String(raw).trim().toLowerCase();
+  if (token === EMPTY_PX) return EMPTY_PX;
+  const match = token.match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/);
+  if (!match) return null;
+  let hex = match[1];
+  if (hex.length === 3) hex = hex.split('').map((c) => c + c).join('');
+  if (hex.length === 8) {
+    if (hex.endsWith('00')) return TRANSPARENT_PX;
+    if (hex.endsWith('ff')) hex = hex.slice(0, 6);
+  }
+  return `#${hex}`;
+}
+
+function parseDesignTokens(text) {
+  const tokens = String(text).split(',').map((part) => part.trim()).filter((part) => part.length);
+  if (tokens.length !== DESIGN_SIZE * DESIGN_SIZE) {
+    throw new Error(`#hex 픽셀은 정확히 64개여야 합니다. (지금 ${tokens.length}개)`);
+  }
+  return tokens.map((token, index) => {
+    const normalized = normalizePixelToken(token);
+    if (!normalized) throw new Error(`${index + 1}번째 픽셀 '${token}'은(는) 올바른 #hex가 아닙니다.`);
+    return normalized;
+  });
+}
+
+function designsEqual(a, b) {
+  return a.length === b.length && a.every((token, index) => token === b[index]);
+}
+
+function getDesign(designs, type) {
+  return designs?.[type] || DEFAULT_DESIGNS[type] || DEFAULT_DESIGNS.dieBlock;
+}
+
+// 블록 테그: 기본 디자인이면 블록 이름, 디자인이 다르면 이름_해시6자리
+function kindTag(type, design) {
+  if (designsEqual(design, DEFAULT_DESIGNS[type])) return type;
+  const hash = hashString(`${type}:${design.join(',')}`).toString(16).padStart(8, '0').slice(0, 6);
+  return `${type}_${hash}`;
+}
+
+function designHitboxCount(tokens) {
+  return tokens.filter((token) => token !== EMPTY_PX).length;
+}
+
+// 히트박스 픽셀을 줄 단위로 묶고, 위아래로 같은 폭이면 합친 직사각형 목록 (픽셀 단위)
+const hitboxRectCache = new Map();
+function hitboxRects(tokens) {
+  const key = tokens.join(',');
+  if (hitboxRectCache.has(key)) return hitboxRectCache.get(key);
+  const rects = [];
+  let open = [];
+  for (let row = 0; row < DESIGN_SIZE; row += 1) {
+    const runs = [];
+    let col = 0;
+    while (col < DESIGN_SIZE) {
+      if (tokens[row * DESIGN_SIZE + col] !== EMPTY_PX) {
+        const startCol = col;
+        while (col < DESIGN_SIZE && tokens[row * DESIGN_SIZE + col] !== EMPTY_PX) col += 1;
+        runs.push({ x: startCol, w: col - startCol });
+      } else {
+        col += 1;
+      }
+    }
+    const next = [];
+    runs.forEach((run) => {
+      const previous = open.find((rect) => rect.x === run.x && rect.w === run.w);
+      if (previous) {
+        previous.h += 1;
+        next.push(previous);
+      } else {
+        const rect = { x: run.x, y: row, w: run.w, h: 1 };
+        rects.push(rect);
+        next.push(rect);
+      }
+    });
+    open = next;
+  }
+  hitboxRectCache.set(key, rects);
+  return rects;
+}
+
+// 월드 좌표의 히트박스 다각형들 (칸 중심 기준 회전)
+function designParts(tokens, x, top, rotation = 0) {
+  const pixel = TILE / DESIGN_SIZE;
+  const cx = x + TILE / 2;
+  const cy = top + TILE / 2;
+  return hitboxRects(tokens).map((rect) => rotatePoints(
+    rectPoints(x + rect.x * pixel, top + rect.y * pixel, rect.w * pixel, rect.h * pixel),
+    cx, cy, rotation,
+  ));
+}
+
+const spriteCanvasCache = new Map();
+function getSpriteCanvas(tokens) {
+  const key = tokens.join(',');
+  if (spriteCanvasCache.has(key)) return spriteCanvasCache.get(key);
+  const sprite = document.createElement('canvas');
+  sprite.width = DESIGN_SIZE;
+  sprite.height = DESIGN_SIZE;
+  const spriteCtx = sprite.getContext('2d');
+  tokens.forEach((token, index) => {
+    if (token === EMPTY_PX || token === TRANSPARENT_PX) return;
+    spriteCtx.fillStyle = token;
+    spriteCtx.fillRect(index % DESIGN_SIZE, Math.floor(index / DESIGN_SIZE), 1, 1);
+  });
+  spriteCanvasCache.set(key, sprite);
+  return sprite;
+}
+
+const spriteUrlCache = new Map();
+function getSpriteDataUrl(tokens) {
+  const key = tokens.join(',');
+  if (!spriteUrlCache.has(key)) spriteUrlCache.set(key, getSpriteCanvas(tokens).toDataURL());
+  return spriteUrlCache.get(key);
+}
+
+
+/* =========================================================
+   script.js  –  블록 코드 code{ } 해석기
+   ---------------------------------------------------------
+   들여쓰기로 묶음을 나눔 (ifCode / wT / until 아래는 한 칸 더 들여쓰기)
+   반복문은 한 바퀴마다 한 프레임 쉬고, wait(A)는 A초 동안 멈춤
+   ========================================================= */
+// 단독으로 쓰는 명령: 이름(소문자) → [최소 인자 수, 최대 인자 수]
+const SCRIPT_COMMANDS = {
+  convert: [1, 1],
+  rot: [1, 1],
+  tran: [1, 1],
+  tranplus: [1, 1],
+  move: [2, 2],
+  px: [2, 2],
+  disapp: [0, 0],
+  appear: [0, 0],
+  wait: [1, 1],
+  rotmove: [2, 2],
+  nokey: [1, 2],
+  catp: [2, 2],
+  kill: [0, 0],
+};
+
+// 값을 돌려주는 함수
+const SCRIPT_FUNCTIONS = {
+  blocktag: [0, 0],
+  coox: [0, 0],
+  cooy: [0, 0],
+  pxcolor: [1, 1],
+  cacoox: [0, 0],
+  cacooy: [0, 0],
+  sin: [1, 1],
+  cos: [1, 1],
+  tan: [1, 1],
+  abs: [1, 1],
+};
+
+const SCRIPT_CONDITION_WORDS = ['dis', 'app', 'jump', 'true', 'false'];
+const SCRIPT_STEP_LIMIT = 5000;
+const SCRIPT_NAME = '[A-Za-z_$\\u3131-\\uD79D][\\w$\\u3131-\\uD79D]*';
+
+class ScriptError extends Error {
+  constructor(message, line) {
+    super(line ? `${line}줄: ${message}` : message);
+    this.line = line;
+  }
+}
+
+function tokenizeExpression(source, line) {
+  const tokens = [];
+  let index = 0;
+  const nameRe = new RegExp(`^${SCRIPT_NAME}`);
+  while (index < source.length) {
+    const rest = source.slice(index);
+    const ch = source[index];
+    if (/\s/.test(ch)) {
+      index += 1;
+      continue;
+    }
+    const number = rest.match(/^(\d+(\.\d+)?|\.\d+)/);
+    if (number) {
+      tokens.push({ t: 'num', v: Number(number[0]) });
+      index += number[0].length;
+      continue;
+    }
+    if (ch === '#') {
+      const hex = rest.match(/^#[0-9a-fA-F]*/)[0];
+      tokens.push({ t: 'hex', v: hex });
+      index += hex.length;
+      continue;
+    }
+    if (ch === '"' || ch === "'") {
+      const end = source.indexOf(ch, index + 1);
+      if (end < 0) throw new ScriptError('따옴표가 닫히지 않았습니다.', line);
+      tokens.push({ t: 'str', v: source.slice(index + 1, end) });
+      index = end + 1;
+      continue;
+    }
+    const name = rest.match(nameRe);
+    if (name) {
+      tokens.push({ t: 'id', v: name[0] });
+      index += name[0].length;
+      continue;
+    }
+    const op = rest.match(/^(\/\/|==|!=|<=|>=|&&|\|\||[+\-*/%<>=!(),])/);
+    if (op) {
+      tokens.push({ t: 'op', v: op[0] });
+      index += op[0].length;
+      continue;
+    }
+    throw new ScriptError(`알 수 없는 문자 '${ch}'가 있습니다.`, line);
+  }
+  return tokens;
+}
+
+function parseExpression(source, line) {
+  const tokens = tokenizeExpression(source, line);
+  let pos = 0;
+  const peek = () => tokens[pos];
+  const next = () => tokens[pos++];
+  const isOp = (value) => peek()?.t === 'op' && peek().v === value;
+  const isWord = (word) => peek()?.t === 'id' && peek().v.toLowerCase() === word;
+
+  function orExpr() {
+    let left = andExpr();
+    while (isOp('||') || isWord('or')) {
+      next();
+      left = { k: 'bin', op: 'or', a: left, b: andExpr() };
+    }
+    return left;
+  }
+  function andExpr() {
+    let left = notExpr();
+    while (isOp('&&') || isWord('and')) {
+      next();
+      left = { k: 'bin', op: 'and', a: left, b: notExpr() };
+    }
+    return left;
+  }
+  function notExpr() {
+    if (isOp('!') || isWord('not')) {
+      next();
+      return { k: 'un', op: 'not', a: notExpr() };
+    }
+    return compareExpr();
+  }
+  function compareExpr() {
+    let left = addExpr();
+    while (peek()?.t === 'op' && ['==', '!=', '<', '>', '<=', '>=', '='].includes(peek().v)) {
+      let op = next().v;
+      if (op === '=') op = '==';
+      left = { k: 'bin', op, a: left, b: addExpr() };
+    }
+    return left;
+  }
+  function addExpr() {
+    let left = mulExpr();
+    while (isOp('+') || isOp('-')) {
+      const op = next().v;
+      left = { k: 'bin', op, a: left, b: mulExpr() };
+    }
+    return left;
+  }
+  function mulExpr() {
+    let left = unary();
+    while (isOp('*') || isOp('/') || isOp('//') || isOp('%')) {
+      const op = next().v;
+      left = { k: 'bin', op, a: left, b: unary() };
+    }
+    return left;
+  }
+  function unary() {
+    if (isOp('-')) {
+      next();
+      return { k: 'un', op: 'neg', a: unary() };
+    }
+    if (isOp('+')) {
+      next();
+      return unary();
+    }
+    return primary();
+  }
+  function primary() {
+    const token = next();
+    if (!token) throw new ScriptError('식이 중간에 끝났습니다.', line);
+    if (token.t === 'num') return { k: 'num', v: token.v };
+    if (token.t === 'str') return { k: 'str', v: token.v };
+    if (token.t === 'hex') return { k: 'hex', v: token.v };
+    if (token.t === 'op' && token.v === '(') {
+      const inner = orExpr();
+      if (!isOp(')')) throw new ScriptError('괄호 ) 가 닫히지 않았습니다.', line);
+      next();
+      return inner;
+    }
+    if (token.t === 'id') {
+      const lower = token.v.toLowerCase();
+      if (isOp('(')) {
+        next();
+        const args = [];
+        if (!isOp(')')) {
+          args.push(orExpr());
+          while (isOp(',')) {
+            next();
+            args.push(orExpr());
+          }
+        }
+        if (!isOp(')')) throw new ScriptError(`${token.v}( 의 괄호가 닫히지 않았습니다.`, line);
+        next();
+        return { k: 'call', name: lower, raw: token.v, args };
+      }
+      if (SCRIPT_CONDITION_WORDS.includes(lower)) return { k: 'kw', name: lower };
+      return { k: 'var', name: token.v };
+    }
+    throw new ScriptError(`'${token.v}' 자리에 값이 와야 합니다.`, line);
+  }
+
+  const expression = orExpr();
+  if (pos < tokens.length) throw new ScriptError(`'${tokens[pos].v}' 근처의 식을 확인해 주세요.`, line);
+  return expression;
+}
+
+function checkArity(table, node, line) {
+  const [min, max] = table[node.name];
+  if (node.args.length < min || node.args.length > max) {
+    const expected = min === max ? `${min}개` : `${min}~${max}개`;
+    throw new ScriptError(`${node.raw}()에는 값이 ${expected} 필요합니다.`, line);
+  }
+}
+
+// 식 안의 함수 호출 검사
+function validateExpression(node, line) {
+  if (!node) return;
+  if (node.k === 'call') {
+    if (SCRIPT_COMMANDS[node.name]) throw new ScriptError(`${node.raw}()는 식 안에 쓸 수 없는 명령입니다.`, line);
+    if (!SCRIPT_FUNCTIONS[node.name]) throw new ScriptError(`'${node.raw}' 함수는 없습니다.`, line);
+    checkArity(SCRIPT_FUNCTIONS, node, line);
+    node.args.forEach((arg) => validateExpression(arg, line));
+  } else if (node.k === 'un') {
+    validateExpression(node.a, line);
+  } else if (node.k === 'bin') {
+    validateExpression(node.a, line);
+    validateExpression(node.b, line);
+  }
+}
+
+function parseStatement(text, line) {
+  let match = text.match(/^ifCode\s+(.+?)\s*:$/i);
+  if (match) {
+    const cond = parseExpression(match[1], line);
+    validateExpression(cond, line);
+    return { k: 'if', cond, line, needsBody: true };
+  }
+  if (/^wT\s*:$/i.test(text)) return { k: 'forever', line, needsBody: true };
+  match = text.match(/^until\s+(.+?)\s*:$/i);
+  if (match) {
+    const cond = parseExpression(match[1], line);
+    validateExpression(cond, line);
+    return { k: 'until', cond, line, needsBody: true };
+  }
+  match = text.match(new RegExp(`^(${SCRIPT_NAME})\\s+c(\\+?)=\\s*(.+)$`));
+  if (match) {
+    const expr = parseExpression(match[3], line);
+    validateExpression(expr, line);
+    return { k: 'assign', name: match[1], add: match[2] === '+', expr, line };
+  }
+  if (text.endsWith(':')) throw new ScriptError(`'${text}'은(는) 알 수 없는 문장입니다. (ifCode, wT, until 중 하나인가요?)`, line);
+
+  const expr = parseExpression(text, line);
+  if (expr.k !== 'call') throw new ScriptError(`'${text}'은(는) 명령이 아닙니다.`, line);
+  if (SCRIPT_FUNCTIONS[expr.name]) throw new ScriptError(`${expr.raw}()는 값을 돌려주는 함수라 단독으로 쓸 수 없습니다.`, line);
+  if (!SCRIPT_COMMANDS[expr.name]) throw new ScriptError(`'${expr.raw}' 명령은 없습니다.`, line);
+  checkArity(SCRIPT_COMMANDS, expr, line);
+  expr.args.forEach((arg) => validateExpression(arg, line));
+  return { k: 'call', name: expr.name, args: expr.args, line };
+}
+
+// 코드 → 실행 트리. lineOffset: 맵 코드 안에서의 줄 번호 보정
+function compileScript(source, lineOffset = 0) {
+  const lines = [];
+  String(source).replace(/\t/g, '    ').split(/\r?\n/).forEach((raw, index) => {
+    const text = raw.replace(/\s+$/, '');
+    const content = text.trim();
+    if (!content || content.startsWith('//')) return;
+    lines.push({ indent: text.length - text.trimStart().length, text: content, line: index + 1 + lineOffset });
+  });
+  if (!lines.length) return [];
+
+  let index = 0;
+  function parseBlock(indent) {
+    const statements = [];
+    while (index < lines.length) {
+      const current = lines[index];
+      if (current.indent < indent) break;
+      if (current.indent > indent) throw new ScriptError('들여쓰기가 맞지 않습니다.', current.line);
+      index += 1;
+      const statement = parseStatement(current.text, current.line);
+      if (statement.needsBody) {
+        const following = lines[index];
+        if (!following || following.indent <= indent) {
+          throw new ScriptError(`'${current.text}' 아래에 한 칸 더 들여쓴 코드가 필요합니다.`, current.line);
+        }
+        statement.body = parseBlock(following.indent);
+      }
+      statements.push(statement);
+    }
+    return statements;
+  }
+
+  const program = parseBlock(lines[0].indent);
+  if (index < lines.length) throw new ScriptError('들여쓰기가 맞지 않습니다.', lines[index].line);
+  return program;
+}
+
+// 코드 앞쪽 공통 들여쓰기 제거 (줄 수는 유지)
+function dedentCode(source) {
+  const lines = String(source).replace(/\t/g, '    ').split(/\r?\n/);
+  const indents = lines.filter((line) => line.trim()).map((line) => line.length - line.trimStart().length);
+  const common = indents.length ? Math.min(...indents) : 0;
+  return lines.map((line) => line.slice(Math.min(common, line.length - line.trimStart().length))).join('\n').replace(/\s+$/, '');
+}
+
+/* ---------- 실행 ---------- */
+const isScriptName = (value) => Boolean(value && typeof value === 'object' && value.isName);
+
+function scriptNumber(value) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (isScriptName(value)) return 0;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function scriptText(value) {
+  if (isScriptName(value)) return value.name;
+  if (typeof value === 'number') return String(Math.round(value * 1e6) / 1e6);
+  return String(value);
+}
+
+function scriptTruthy(value) {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value !== 0;
+  if (isScriptName(value)) return false;
+  return value !== '' && value !== '0' && String(value).toLowerCase() !== 'false';
+}
+
+function scriptNumericLike(value) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === 'string' && value.trim() !== '' && Number.isFinite(Number(value))) return Number(value);
+  return null;
+}
+
+function scriptEquals(a, b) {
+  const na = scriptNumericLike(a);
+  const nb = scriptNumericLike(b);
+  if (na !== null && nb !== null) return Math.abs(na - nb) < 1e-9;
+  const normalize = (value) => {
+    const text = scriptText(value);
+    return text.startsWith('#') ? normalizePixelToken(text) || text : text;
+  };
+  return normalize(a) === normalize(b);
+}
+
+const cleanNumber = (value) => (Math.abs(value) < 1e-10 ? 0 : Math.round(value * 1e9) / 1e9);
+const degToRad = (deg) => (deg * Math.PI) / 180;
+
+function evalScript(rt, node) {
+  const block = rt.block;
+  switch (node.k) {
+    case 'num':
+    case 'str':
+    case 'hex':
+      return node.v;
+    case 'var': {
+      const store = node.name.startsWith('$') ? rt.world.globals : rt.vars;
+      return store.has(node.name) ? store.get(node.name) : { isName: true, name: node.name };
+    }
+    case 'kw':
+      if (node.name === 'true') return true;
+      if (node.name === 'false') return false;
+      if (node.name === 'dis') return block.hidden;
+      if (node.name === 'app') return !block.hidden;
+      if (node.name === 'jump') {
+        const jumped = block.jumped;
+        block.jumped = false; // 한 번 확인하면 초기화
+        return jumped;
+      }
+      return false;
+    case 'un':
+      return node.op === 'not' ? !scriptTruthy(evalScript(rt, node.a)) : -scriptNumber(evalScript(rt, node.a));
+    case 'bin': {
+      if (node.op === 'and') return scriptTruthy(evalScript(rt, node.a)) && scriptTruthy(evalScript(rt, node.b));
+      if (node.op === 'or') return scriptTruthy(evalScript(rt, node.a)) || scriptTruthy(evalScript(rt, node.b));
+      const a = evalScript(rt, node.a);
+      const b = evalScript(rt, node.b);
+      if (node.op === '==') return scriptEquals(a, b);
+      if (node.op === '!=') return !scriptEquals(a, b);
+      const x = scriptNumber(a);
+      const y = scriptNumber(b);
+      switch (node.op) {
+        case '+':
+          // 숫자가 아닌 글자끼리는 이어 붙임
+          if (scriptNumericLike(a) === null && typeof a === 'string') return a + scriptText(b);
+          return cleanNumber(x + y);
+        case '-': return cleanNumber(x - y);
+        case '*': return cleanNumber(x * y);
+        case '/': return y === 0 ? 0 : cleanNumber(x / y);
+        case '//': return y === 0 ? 0 : Math.floor(x / y);          // 몫
+        case '%': return y === 0 ? 0 : cleanNumber(x - y * Math.floor(x / y)); // 나머지
+        case '<': return x < y;
+        case '>': return x > y;
+        case '<=': return x <= y;
+        case '>=': return x >= y;
+        default: return 0;
+      }
+    }
+    case 'call': {
+      const args = node.args.map((arg) => evalScript(rt, arg));
+      switch (node.name) {
+        case 'blocktag': return block.kind.tag;
+        case 'coox': return cleanNumber(block.x);
+        case 'cooy': return cleanNumber(block.y);
+        case 'pxcolor': {
+          const pixel = Math.round(scriptNumber(args[0])) - 1;
+          return block.design[pixel] ?? EMPTY_PX;
+        }
+        case 'cacoox': return playerGridPosition().x;
+        case 'cacooy': return playerGridPosition().y;
+        case 'sin': return cleanNumber(Math.sin(degToRad(scriptNumber(args[0]))));
+        case 'cos': return cleanNumber(Math.cos(degToRad(scriptNumber(args[0]))));
+        case 'tan': return cleanNumber(Math.tan(degToRad(scriptNumber(args[0]))));
+        case 'abs': return Math.abs(scriptNumber(args[0]));
+        default: return 0;
+      }
+    }
+    default:
+      return 0;
+  }
+}
+
+function normalizeKeyName(text) {
+  const key = String(text).trim().toLowerCase();
+  if (key === 'space' || key === 'spacebar' || key === ' ') return 'space';
+  if (['click', 'mouse', 'touch', 'tap', 'pointer'].includes(key)) return 'click';
+  if (key === 'all' || key === 'any') return 'all';
+  return null;
+}
+
+/*
+  실행 상태는 "스택"으로만 들고 있어서 그대로 복사할 수 있음 (연습 모드 체크포인트용)
+  프레임: { kind: 'seq' | 'forever' | 'until', body, index, pendingCheck, cond?, line? }
+*/
+function createScriptRuntime(block, world, program) {
+  return {
+    block,
+    vars: block.vars,
+    world,
+    done: program.length === 0,
+    steps: 0,
+    waitUntil: null,
+    stack: [{ kind: 'seq', body: program, index: 0, pendingCheck: false }],
+  };
+}
+
+function withLine(line, fn) {
+  try {
+    return fn();
+  } catch (error) {
+    if (error instanceof ScriptError && error.line) throw error;
+    throw new ScriptError(error instanceof Error ? error.message : String(error), line);
+  }
+}
+
+// 한 프레임 실행: 반복 한 바퀴 끝 · wait · 단계 제한에서 멈추고 다음 프레임에 이어서
+function stepScript(rt) {
+  if (rt.done) return;
+  if (rt.waitUntil !== null) {
+    if (rt.world.time < rt.waitUntil) return;
+    rt.waitUntil = null;
+  }
+  rt.steps = 0;
+  while (!rt.done) {
+    const frame = rt.stack[rt.stack.length - 1];
+    if (!frame) {
+      rt.done = true;
+      return;
+    }
+    if (frame.pendingCheck) {
+      frame.pendingCheck = false;
+      if (frame.kind === 'until' && withLine(frame.line, () => scriptTruthy(evalScript(rt, frame.cond)))) {
+        rt.stack.pop();
+        continue;
+      }
+      frame.index = 0;
+    }
+    if (frame.index >= frame.body.length) {
+      if (frame.kind === 'forever' || frame.kind === 'until') {
+        frame.pendingCheck = true;
+        return; // 반복 한 바퀴마다 한 프레임 쉼
+      }
+      rt.stack.pop();
+      continue;
+    }
+    rt.steps += 1;
+    if (rt.steps > SCRIPT_STEP_LIMIT) return; // 쉬지 않고 너무 오래 돌면 다음 프레임에 이어서
+    const statement = frame.body[frame.index];
+    frame.index += 1;
+    if (withLine(statement.line, () => execScriptStatement(rt, statement))) return;
+  }
+}
+
+// true를 돌려주면 이번 프레임은 여기까지
+function execScriptStatement(rt, statement) {
+  const push = (kind, extra = {}) => rt.stack.push({ kind, body: statement.body, index: 0, pendingCheck: false, line: statement.line, ...extra });
+  switch (statement.k) {
+    case 'if':
+      if (scriptTruthy(evalScript(rt, statement.cond))) push('seq');
+      return false;
+    case 'forever':
+      push('forever');
+      return false;
+    case 'until':
+      if (!scriptTruthy(evalScript(rt, statement.cond))) push('until', { cond: statement.cond });
+      return false;
+    case 'assign': {
+      const value = evalScript(rt, statement.expr);
+      const store = statement.name.startsWith('$') ? rt.world.globals : rt.vars;
+      if (statement.add) {
+        const current = store.has(statement.name) ? store.get(statement.name) : 0;
+        store.set(statement.name, cleanNumber(scriptNumber(current) + scriptNumber(value)));
+      } else {
+        store.set(statement.name, isScriptName(value) ? value.name : value);
+      }
+      return false;
+    }
+    case 'call':
+      return execScriptCommand(rt, statement);
+    default:
+      return false;
+  }
+}
+
+function execScriptCommand(rt, statement) {
+  const block = rt.block;
+  const args = statement.args.map((arg) => evalScript(rt, arg));
+  const num = (index) => scriptNumber(args[index]);
+
+  switch (statement.name) {
+    case 'convert': {
+      const kind = resolveRuntimeKind(rt.world, scriptText(args[0]));
+      if (!kind) throw new ScriptError(`블록 테그 '${scriptText(args[0])}'을(를) 찾을 수 없습니다.`, statement.line);
+      block.kind = kind;
+      block.type = kind.type;
+      block.design = [...kind.design];
+      block.rotation = fixBlockRotation(kind.type, block.rotation);
+      markBlockDirty(block);
+      return false;
+    }
+    case 'rot':
+      block.rotation = fixBlockRotation(block.type, block.rotation + num(0)); // 화살표 공점은 -80°~80°
+      markBlockDirty(block);
+      return false;
+    case 'tran':
+      block.ghost = clamp(num(0), 0, 100);
+      return false;
+    case 'tranplus':
+      block.ghost = clamp(block.ghost + num(0), 0, 100);
+      return false;
+    case 'move':
+      block.x = cleanNumber(block.x + num(0));
+      block.y = cleanNumber(block.y + num(1));
+      markBlockDirty(block);
+      return false;
+    case 'rotmove': {
+      const rad = degToRad(num(0));
+      block.x = cleanNumber(block.x + Math.cos(rad) * num(1));
+      block.y = cleanNumber(block.y + Math.sin(rad) * num(1));
+      markBlockDirty(block);
+      return false;
+    }
+    case 'px': {
+      const pixel = Math.round(num(0)) - 1;
+      if (pixel < 0 || pixel > 63) throw new ScriptError('픽셀 번호는 1~64 사이여야 합니다.', statement.line);
+      const token = normalizePixelToken(scriptText(args[1]));
+      if (!token) throw new ScriptError(`'${scriptText(args[1])}'은(는) 올바른 #hex가 아닙니다.`, statement.line);
+      block.design = [...block.design]; // 복사 후 수정 (체크포인트가 옛 배열을 그대로 들고 있을 수 있음)
+      block.design[pixel] = token;
+      markBlockDirty(block);
+      return false;
+    }
+    case 'disapp':
+      if (!block.hidden) {
+        block.hidden = true;
+        markBlockDirty(block);
+      }
+      return false;
+    case 'appear':
+      if (block.hidden) {
+        block.hidden = false;
+        markBlockDirty(block);
+      }
+      return false;
+    case 'wait':
+      rt.waitUntil = rt.world.time + Math.max(0, num(0));
+      return true;
+    case 'nokey': {
+      const key = normalizeKeyName(scriptText(args[0]));
+      if (!key) throw new ScriptError('noKey에는 Space, Click, All 중 하나를 쓰세요.', statement.line);
+      const duration = args.length > 1 ? Math.max(0, num(1)) : Infinity;
+      rt.world.disabledKeys[key] = rt.world.time + duration;
+      return false;
+    }
+    case 'catp':
+      teleportPlayer(num(0), num(1));
+      return false;
+    case 'kill':
+      rt.done = true;
+      failStage();
+      return true;
+    default:
+      return false;
+  }
+}
 
 /* =========================================================
    screens.js  –  화면(UI) 관리
@@ -1017,19 +2852,70 @@ const SCREENS = {
   CLEAR: 'clear',
 };
 
+const EDITOR_CELL = 40; // 에디터 한 칸 = 40px (8×8 픽셀이면 픽셀당 5px)
+
 const EDITOR_TOOLS = [
   { type: 'start', label: 'START', icon: 'S' },
   { type: 'dieBlock', label: 'DIE BLOCK', icon: 'X' },
+  { type: 'square', label: 'SQUARE', icon: '■' },
+  { type: 'slope', label: 'SLOPE', icon: '◢' },
   { type: 'thorn', label: 'THORN', icon: '▲' },
   { type: 'jumpUp', label: 'JUMP UP', icon: 'J' },
+  { type: 'nextJump', label: 'NEXT JUMP', icon: '●' },
+  { type: 'greenOrb', label: 'GREEN ORB', icon: '●' },
+  { type: 'blackOrb', label: 'BLACK ORB', icon: '●' },
+  { type: 'dashOrb', label: 'DASH ORB', icon: '➜' },
+  { type: 'sBlock', label: 'S BLOCK', icon: 'S' },
   { type: 'halfSpeed', label: '0.5× SPEED', icon: '½' },
   { type: 'doubleSpeed', label: '2× SPEED', icon: '2×' },
+  { type: 'modeCube', label: 'MODE CUBE', icon: '◇' },
+  { type: 'modeAirplane', label: 'MODE AIRPLANE', icon: '✈' },
+  ...MODES.filter((mode) => mode.id !== 'cube' && mode.id !== 'ship').map((mode) => ({ type: `mode${mode.code}`, label: `MODE ${mode.label}`, icon: '◎' })),
   { type: 'erase', label: 'ERASE', icon: '⌫' },
 ];
+
+// 맵 에디터 블록 카테고리 (탭을 누르면 아래에 블록이 펼쳐짐)
+const EDITOR_CATEGORIES = [
+  { id: 'blocks', label: '블록', types: ['square', 'slope'] },
+  { id: 'hazards', label: '위험', types: ['dieBlock', 'thorn'] },
+  { id: 'pads', label: '패드', types: ['jumpUp', 'halfSpeed', 'doubleSpeed'] },
+  { id: 'orbs', label: '공점', types: ['nextJump', 'greenOrb', 'blackOrb', 'dashOrb'] },
+  { id: 'portals', label: '포털', types: PORTAL_TYPES },
+  { id: 'special', label: '특수', types: ['sBlock'] },
+  { id: 'coded', label: '코드 블록', types: [] },
+];
+
+function categoryOfType(type) {
+  return EDITOR_CATEGORIES.find((category) => category.types.includes(type))?.id || null;
+}
 
 function formatMapNumber(value) {
   const rounded = Math.round(Number(value) * 10) / 10;
   return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+}
+
+const TYPE_LABELS = Object.fromEntries(EDITOR_TOOLS.map((tool) => [tool.type, tool.label]));
+
+/* ---------- 에디터 블록 종류(kind)와 테그 ---------- */
+function getEditorKind(editor, kindId) {
+  return editor.kinds.find((kind) => kind.id === kindId) || null;
+}
+
+function editorKindTag(kind) {
+  return kind ? kindTag(kind.type, kind.design) : '';
+}
+
+function editorBlockTag(editor, block) {
+  if (!block || block.type === 'start') return 'start';
+  return editorKindTag(getEditorKind(editor, block.kindId));
+}
+
+function editorBlockDesign(editor, block) {
+  return getEditorKind(editor, block.kindId)?.design || DEFAULT_DESIGNS[block.type];
+}
+
+function indentCode(code) {
+  return code.split('\n').map((line) => (line.trim() ? `    ${line}` : '')).join('\n');
 }
 
 function buildMapCode(editor) {
@@ -1038,9 +2924,32 @@ function buildMapCode(editor) {
     if (b.type === 'start' && a.type !== 'start') return 1;
     return a.x - b.x || a.y - b.y;
   });
+
+  // 기본 디자인과 다른 블록 종류만 design(테그, ...)로 내보냄
+  const designLines = new Map();
+  editor.kinds.forEach((kind) => {
+    const tag = editorKindTag(kind);
+    if (tag !== kind.type && !designLines.has(tag)) designLines.set(tag, `design(${tag}, ${kind.design.join(', ')})`);
+  });
+
+  const blockLines = [];
+  blocks.forEach((block) => {
+    const name = editorBlockTag(editor, block);
+    const coords = `${formatMapNumber(block.x)}, ${formatMapNumber(block.y)}`;
+    let rotation = block.type !== 'start' ? normalizeAngle(block.rotation || 0) : 0;
+    if (block.type === 'dashOrb' && rotation > 180) rotation -= 360; // 화살표 공점은 -80~80으로 표기
+    blockLines.push(rotation
+      ? `blockSpecial(${name}, ${coords}, ${formatMapNumber(rotation)})`
+      : `block(${name}, ${coords})`);
+    if (block.code && block.code.trim()) {
+      blockLines.push('code{', indentCode(block.code), '}');
+    }
+  });
+
   return [
     `startMode(${editor.startMode})`,
-    ...blocks.map((block) => `block(${block.type}, ${formatMapNumber(block.x)}, ${formatMapNumber(block.y)})`),
+    ...designLines.values(),
+    ...blockLines,
     `clear(${formatMapNumber(editor.clearX)})`,
   ].join('\n');
 }
@@ -1053,67 +2962,172 @@ function escapeHtml(value) {
     .replaceAll('"', '&quot;');
 }
 
+function spriteClassFor(editor, block) {
+  if (block.type === 'start') return `sprite-start${editor.startMode}`;
+  return `sprite-k-${block.kindId}`;
+}
+
+// 에디터용 스프라이트 CSS 클래스 (.sprite-k-<kindId>, .sprite-start…)
+function spriteStyleBlock(editor) {
+  const rules = editor.kinds.map((kind) => `.sprite-k-${kind.id}{background-image:url(${getSpriteDataUrl(kind.design)})}`);
+  MODES.forEach((mode) => rules.push(`.sprite-start${mode.code}{background-image:url(${getSpriteDataUrl(DEFAULT_DESIGNS[`start${mode.code}`])})}`));
+  return `<style>${rules.join('')}</style>`;
+}
+
 function editorBlockMarkup(editor, block) {
   if (!block) return '';
   const fx = Math.round((block.x - Math.floor(block.x)) * 10) / 10;
   const fy = Math.round((block.y - Math.floor(block.y)) * 10) / 10;
-  const style = `--fx:${fx};--fy:${fy}`;
-  if (block.type === 'start') {
-    const modeClass = editor.startMode === 'Airplane' ? 'object-start-airplane' : 'object-start-cube';
-    return `<span class="editor-object ${modeClass}" style="${style}"></span>`;
-  }
-  if (block.type === 'thorn') {
-    return `<span class="editor-object object-thorn" style="${style}"></span>`;
-  }
-  if (block.type === 'dieBlock') {
-    return `<span class="editor-object object-dieBlock" style="${style}"></span>`;
-  }
-  const padContent = block.type === 'jumpUp' ? '↑' : block.type === 'halfSpeed' ? '←' : '»';
-  return `<span class="editor-object object-pad object-${block.type}" style="${style}">${padContent}</span>`;
+  const rotation = block.type !== 'start' ? block.rotation || 0 : 0;
+  const style = `transform:translate(${fx * EDITOR_CELL}px, ${-fy * EDITOR_CELL}px) rotate(${rotation}deg)`;
+  const badge = block.code && block.code.trim() ? '<span class="code-badge" aria-hidden="true">{}</span>' : '';
+  const invisible = block.type === 'sBlock' ? ' editor-invisible' : ''; // 게임에서는 안 보이는 블록
+  return `<span class="editor-object sprite ${spriteClassFor(editor, block)}${invisible}" style="${style}" aria-hidden="true"></span>${badge}`;
 }
 
+const MAP_NUM = '(-?\\d+(?:\\.\\d+)?)';
+const MAP_NAME = '([A-Za-z][A-Za-z0-9_]*)';
+const BLOCK_LINE_RE = new RegExp(`^block\\(\\s*${MAP_NAME}\\s*,\\s*${MAP_NUM}\\s*,\\s*${MAP_NUM}\\s*\\)$`);
+const SPECIAL_LINE_RE = new RegExp(`^blockSpecial\\(\\s*${MAP_NAME}\\s*,\\s*${MAP_NUM}\\s*,\\s*${MAP_NUM}\\s*,\\s*${MAP_NUM}\\s*\\)$`);
+
+/*
+  맵 코드 형식
+    startMode(Cube|Airplane|Ball|Ufo|Wave|Robot|Spider|Swing)
+    design(테그, #hex × 64)          테그 = 기본 블록 이름 또는 이름_xxxx
+    block(테그, x, y)
+    blockSpecial(테그, x, y, 각도)
+    code{                            ← 바로 위 블록에 붙는 코드
+        ...
+    }
+    clear(x)
+*/
 function parseMapCode(source) {
-  const lines = String(source).split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (!lines.length) throw new Error('맵 코드를 입력해 주세요.');
-  if (lines.length > 5002) throw new Error('블록은 최대 5000개까지 불러올 수 있습니다.');
+  const rawLines = String(source).split(/\r?\n/);
+  if (!rawLines.some((line) => line.trim())) throw new Error('맵 코드를 입력해 주세요.');
 
   let startMode = null;
   let clearX = null;
+  let statementCount = 0;
   const blocks = [];
-  const validTypes = new Set(EDITOR_TOOLS.filter((tool) => tool.type !== 'erase').map((tool) => tool.type));
+  const kinds = {};
 
-  lines.forEach((line, index) => {
-    const lineNumber = index + 1;
-    const modeMatch = line.match(/^startMode\((Cube|Airplane)\)$/);
+  const pushBlock = (lineNumber, name, rawX, rawY, rotation = 0) => {
+    const x = Number(rawX);
+    const y = Number(rawY);
+    if (x < 0 || y < 0) throw new Error(`${lineNumber}줄: 좌표에는 음수를 사용할 수 없습니다.`);
+    blocks.push({ name, type: null, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, rotation, code: '', lineNumber });
+  };
+
+  for (let i = 0; i < rawLines.length; i += 1) {
+    const lineNumber = i + 1;
+    const line = rawLines[i].trim();
+    if (!line) continue;
+
+    const codeOpen = line.match(/^code\s*\{(.*)$/);
+    if (codeOpen) {
+      const target = blocks[blocks.length - 1];
+      if (!target) throw new Error(`${lineNumber}줄: code{ } 바로 위에 블록이 있어야 합니다.`);
+      if (target.name === 'start') throw new Error(`${lineNumber}줄: start 블록에는 code를 넣을 수 없습니다.`);
+      if (target.code) throw new Error(`${lineNumber}줄: 이 블록에는 이미 code가 있습니다.`);
+      const rest = codeOpen[1];
+      const body = [];
+      let closed = false;
+      let bodyStart = lineNumber;
+      if (rest.trim().endsWith('}')) {
+        body.push(rest.trim().slice(0, -1));
+        closed = true;
+      } else {
+        if (rest.trim()) body.push(rest);
+        else bodyStart = lineNumber + 1;
+        while (i + 1 < rawLines.length) {
+          i += 1;
+          if (rawLines[i].trim() === '}') {
+            closed = true;
+            break;
+          }
+          body.push(rawLines[i]);
+        }
+      }
+      if (!closed) throw new Error(`${lineNumber}줄: code{ 가 } 로 닫히지 않았습니다.`);
+      const code = dedentCode(body.join('\n'));
+      try {
+        compileScript(code, bodyStart - 1);
+      } catch (error) {
+        throw new Error(`code 오류 · ${error.message}`);
+      }
+      target.code = code;
+      continue;
+    }
+
+    statementCount += 1;
+    if (statementCount > 5002 + 500) throw new Error('블록은 최대 5000개까지 불러올 수 있습니다.');
+
+    const modeMatch = line.match(/^startMode\(\s*([A-Za-z]+)\s*\)$/);
+    if (modeMatch && !MODE_BY_CODE[modeMatch[1]]) {
+      throw new Error(`${lineNumber}줄: 시작 모드는 ${MODES.map((mode) => mode.code).join(', ')} 중 하나여야 합니다.`);
+    }
     if (modeMatch) {
       if (startMode) throw new Error(`${lineNumber}줄: startMode는 한 번만 사용할 수 있습니다.`);
       startMode = modeMatch[1];
-      return;
+      continue;
     }
 
-    const blockMatch = line.match(/^block\(([A-Za-z][A-Za-z0-9]*),\s*(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)$/);
+    const designMatch = line.match(/^design\(\s*([A-Za-z][A-Za-z0-9_]*)\s*,(.*)\)$/);
+    if (designMatch) {
+      const [, name, body] = designMatch;
+      const variant = name.match(/^([A-Za-z]+)_[A-Za-z0-9]+$/);
+      const type = DESIGN_TYPES.includes(name) ? name : variant && DESIGN_TYPES.includes(variant[1]) ? variant[1] : null;
+      if (!type) throw new Error(`${lineNumber}줄: '${name}'은(는) 디자인할 수 없는 블록 테그입니다. (예: thorn, thorn_a1b2c3)`);
+      if (kinds[name]) throw new Error(`${lineNumber}줄: ${name} 디자인은 한 번만 쓸 수 있습니다.`);
+      try {
+        kinds[name] = { name, type, design: parseDesignTokens(body) };
+      } catch (error) {
+        throw new Error(`${lineNumber}줄: ${error.message}`);
+      }
+      continue;
+    }
+
+    const specialMatch = line.match(SPECIAL_LINE_RE);
+    if (specialMatch) {
+      const [, name, rawX, rawY, rawAngle] = specialMatch;
+      if (name === 'start') throw new Error(`${lineNumber}줄: start 블록은 회전할 수 없습니다.`);
+      pushBlock(lineNumber, name, rawX, rawY, normalizeAngle(rawAngle));
+      continue;
+    }
+
+    const blockMatch = line.match(BLOCK_LINE_RE);
     if (blockMatch) {
-      const [, type, rawX, rawY] = blockMatch;
-      const x = Number(rawX);
-      const y = Number(rawY);
-      if (!validTypes.has(type)) throw new Error(`${lineNumber}줄: 알 수 없는 블록 '${type}'입니다.`);
-      if (x < 0 || y < 0) throw new Error(`${lineNumber}줄: 좌표에는 음수를 사용할 수 없습니다.`);
-      blocks.push({ type, x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10 });
-      return;
+      const [, name, rawX, rawY] = blockMatch;
+      pushBlock(lineNumber, name, rawX, rawY);
+      continue;
     }
 
-    const clearMatch = line.match(/^clear\((-?\d+(?:\.\d+)?)\)$/);
+    const clearMatch = line.match(/^clear\(\s*(-?\d+(?:\.\d+)?)\s*\)$/);
     if (clearMatch) {
       if (clearX !== null) throw new Error(`${lineNumber}줄: clear는 한 번만 사용할 수 있습니다.`);
       clearX = Math.round(Number(clearMatch[1]) * 10) / 10;
       if (clearX < 0) throw new Error(`${lineNumber}줄: clear 좌표에는 음수를 사용할 수 없습니다.`);
-      return;
+      continue;
     }
 
     throw new Error(`${lineNumber}줄의 형식을 확인해 주세요.`);
+  }
+
+  // 블록 이름(테그) 확인
+  blocks.forEach((block) => {
+    if (block.name === 'start') {
+      block.type = 'start';
+    } else if (kinds[block.name]) {
+      block.type = kinds[block.name].type;
+    } else if (DESIGN_TYPES.includes(block.name)) {
+      block.type = block.name;
+    } else {
+      throw new Error(`${block.lineNumber}줄: 알 수 없는 블록 '${block.name}'입니다. 테그라면 design(${block.name}, ...)이 필요합니다.`);
+    }
+    block.rotation = fixBlockRotation(block.type, block.rotation); // 화살표 공점은 -80°~80°
   });
 
-  if (!startMode) throw new Error('startMode(Cube) 또는 startMode(Airplane)이 필요합니다.');
+  if (!startMode) throw new Error(`startMode(...)가 필요합니다. (${MODES.map((mode) => mode.code).join(', ')})`);
   const starts = blocks.filter((block) => block.type === 'start');
   if (starts.length !== 1) throw new Error('start 블록은 정확히 하나가 필요합니다.');
   if (clearX === null) throw new Error('clear(x) 설정이 필요합니다.');
@@ -1126,7 +3140,8 @@ function parseMapCode(source) {
     occupied.add(key);
   });
 
-  return { startMode, blocks, clearX };
+  blocks.forEach((block) => delete block.lineNumber);
+  return { startMode, blocks, clearX, kinds };
 }
 
 function screenMarkup({ title, body = '', buttons = '' }) {
@@ -1165,15 +3180,23 @@ function createScreenManager({
     openLoad: () => onAction('openLoad'),
     selectCharacter: (value) => onAction('selectCharacter', value),
     beginRun: () => onAction('beginRun'),
+    beginPractice: () => onAction('beginPractice'),
+    practiceStage: () => onAction('practiceStage'),
+    playNormal: () => onAction('playNormal'),
+    practiceLoadedMap: () => onAction('practiceLoadedMap'),
     retryStage: () => onAction('retryStage'),
     backToMenu: () => onAction('backToMenu'),
     nextStage: () => onAction('nextStage'),
     setEditorMode: (value) => onAction('setEditorMode', value),
     selectEditorTool: (value) => onAction('selectEditorTool', value),
     placeEditorBlock: (value) => onAction('placeEditorBlock', value),
+    fillEditorRect: (value) => onAction('fillEditorRect', value),
+    toggleMoveMode: () => onAction('toggleMoveMode'),
     toggleFineMove: () => onAction('toggleFineMove'),
     nudgeSelected: (value) => onAction('nudgeSelected', value),
     deleteSelected: () => onAction('deleteSelected'),
+    rotateEditor: (value) => onAction('rotateEditor', value),
+    setEditorRotation: () => onAction('setEditorRotation', root.querySelector('#editor-rotation')?.value),
     setClearX: () => onAction('setClearX', root.querySelector('#editor-clear-x')?.value),
     exportMapCode: () => onAction('exportMapCode'),
     copyMapCode: () => onAction('copyMapCode'),
@@ -1183,7 +3206,330 @@ function createScreenManager({
     loadMapCode: () => onAction('loadMapCode', root.querySelector('#load-code-input')?.value || ''),
     playLoadedMap: () => onAction('playLoadedMap'),
     expandEditor: (value) => onAction('expandEditor', value),
+    openDesign: (value) => onAction('openDesign', value),
+    closeDesign: () => onAction('closeDesign'),
+    selectDesignType: (value) => onAction('selectDesignType', value),
+    setDesignBrush: (value) => onAction('setDesignBrush', value),
+    setDesignColor: (value) => onAction('setDesignColor', value),
+    designFillAll: () => onAction('designFillAll'),
+    designClearAll: () => onAction('designClearAll'),
+    designReset: () => onAction('designReset'),
+    toggleDesignHitbox: () => onAction('toggleDesignHitbox'),
+    applyDesignCode: () => onAction('applyDesignCode', root.querySelector('#design-code')?.value || ''),
+    newDesignVariant: () => onAction('newDesignVariant'),
+    deleteDesignVariant: () => onAction('deleteDesignVariant'),
+    openBlockCode: () => onAction('openBlockCode'),
+    saveBlockCode: () => onAction('saveBlockCode', root.querySelector('#block-code')?.value ?? ''),
+    cancelBlockCode: () => onAction('cancelBlockCode'),
+    deleteBlockCode: () => onAction('deleteBlockCode'),
+    removeCodedTool: (value) => onAction('removeCodedTool', value),
+    togglePaletteCategory: (value) => onAction('togglePaletteCategory', value),
   };
+
+  // 코드 편집기 명령어 목록: [보이는 글, 설명, 넣을 코드]
+  const CODE_HELP = [
+    ['blockTag()', '이 블록의 테그', 'blockTag()'],
+    ['convert(A)', '테그가 A인 블록으로 변환', 'convert(thorn)'],
+    ['rot(A)', 'A도 회전 (시계 방향, 히트박스 포함)', 'rot(15)'],
+    ['ifCode <조건>:', '조건이 맞으면 아래 실행', 'ifCode cooX() > 5:\n    '],
+    ['wT:', '계속 반복', 'wT:\n    '],
+    ['until <조건>:', '조건이 될 때까지 반복', 'until dis:\n    '],
+    ['Tran(A)', '투명도를 A로 (0 보임 ~ 100 투명)', 'Tran(50)'],
+    ['TranPlus(A)', '투명도를 A만큼 바꾸기', 'TranPlus(10)'],
+    ['move(A, B)', 'x로 A칸, y로 B칸 이동', 'move(1, 0)'],
+    ['cooX()', '블록 x좌표', 'cooX()'],
+    ['cooY()', '블록 y좌표', 'cooY()'],
+    ['A c= B', '변수 A를 B로 ($로 시작하면 모든 블록 공용)', 'a c= 0'],
+    ['A c+= B', '변수 A에 B만큼 더하기', 'a c+= 1'],
+    ['px(A, #hex)', 'A번 픽셀(1~64)을 #hex로', 'px(1, #ff0000)'],
+    ['pxColor(A)', 'A번 픽셀의 색', 'pxColor(1)'],
+    ['disapp()', '사라지기 (히트박스도 없어짐)', 'disapp()'],
+    ['appear()', '나타나기', 'appear()'],
+    ['dis', '사라져 있는가?', 'dis'],
+    ['app', '나타나 있는가?', 'app'],
+    ['wait(A)', 'A초 기다리기', 'wait(1)'],
+    ['rotMove(A, B)', 'A도 방향으로 B칸 이동 (0=→, 90=↑)', 'rotMove(90, 1)'],
+    ['jump', '이 블록 위에서 점프했는가?', 'jump'],
+    ['noKey(A)', 'A키 막기: Space, Click, All (noKey(A, 초)도 가능)', 'noKey(Space)'],
+    ['caCooX()', '캐릭터 x좌표', 'caCooX()'],
+    ['caCooY()', '캐릭터 y좌표', 'caCooY()'],
+    ['caTp(A, B)', '캐릭터를 (A, B)로 순간이동', 'caTp(0, 3)'],
+    ['kill()', '캐릭터 죽이기', 'kill()'],
+    ['+ - * /', '사칙연산', ' + '],
+    ['//  %', '몫 · 나머지', ' // '],
+    ['== != < > <= >=', '비교', ' == '],
+    ['and or not', '그리고 · 또는 · 아님', ' and '],
+    ['sin cos tan abs', '삼각함수(도 단위) · 절대값', 'sin(30)'],
+  ];
+
+  function codeOverlayMarkup(editor) {
+    const state = editor.codeEditor;
+    const block = editor.blocks.find((item) => item.id === state.blockId);
+    if (!block) return '';
+    const tag = editorBlockTag(editor, block);
+    return `
+      <div class="design-overlay" role="dialog" aria-modal="true" aria-labelledby="code-title">
+        <div class="design-panel code-panel">
+          <div class="design-head">
+            <h3 id="code-title"><span class="tool-sprite sprite ${spriteClassFor(editor, block)}" aria-hidden="true"></span>BLOCK CODE · ${TYPE_LABELS[block.type]} (${formatMapNumber(block.x)}, ${formatMapNumber(block.y)})</h3>
+            <div class="design-actions">
+              <button class="pixel-button" data-action="saveBlockCode">SAVE</button>
+              <button class="pixel-button alt" data-action="cancelBlockCode">CANCEL</button>
+            </div>
+          </div>
+          <p class="tag-line">블록 테그 <code class="tag-chip big">${escapeHtml(tag)}</code></p>
+          <div class="code-body">
+            <div class="code-main">
+              <textarea id="block-code" class="code-input" spellcheck="false" aria-label="블록 코드" placeholder="wT:&#10;    rot(5)&#10;    wait(0.1)">${escapeHtml(state.draft)}</textarea>
+              <p class="load-status ${state.error ? 'error' : ''}">${escapeHtml(state.error || 'Tab = 들여쓰기 4칸 · Ctrl+Enter = 저장 · // 로 시작하는 줄은 메모')}</p>
+              <div class="design-actions">
+                <button class="tool-button" data-action="deleteBlockCode" ${block.code ? '' : 'disabled'}>DELETE CODE</button>
+              </div>
+            </div>
+            <div class="code-help">
+              <h4>명령어 (누르면 넣기)</h4>
+              ${CODE_HELP.map(([label, desc, snippet]) => `
+                <button type="button" class="code-help-item" data-snippet="${escapeHtml(snippet)}"><code>${escapeHtml(label)}</code><span>${escapeHtml(desc)}</span></button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function attachCodeEditor(editor) {
+    const textarea = root.querySelector('#block-code');
+    if (!textarea) return;
+    const insert = (text) => {
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      textarea.value = textarea.value.slice(0, start) + text + textarea.value.slice(end);
+      textarea.selectionStart = textarea.selectionEnd = start + text.length;
+      editor.codeEditor.draft = textarea.value;
+      textarea.focus();
+    };
+    textarea.addEventListener('input', () => {
+      editor.codeEditor.draft = textarea.value;
+    });
+    textarea.addEventListener('keydown', (event) => {
+      if (event.key === 'Tab') {
+        event.preventDefault();
+        insert('    ');
+      } else if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        handlers.saveBlockCode();
+      } else if (event.key === 'Enter') {
+        // 새 줄에서 앞 줄 들여쓰기 유지, ':'로 끝나면 한 칸 더
+        event.preventDefault();
+        const before = textarea.value.slice(0, textarea.selectionStart);
+        const currentLine = before.slice(before.lastIndexOf('\n') + 1);
+        let indent = currentLine.match(/^\s*/)[0];
+        if (currentLine.trim().endsWith(':')) indent += '    ';
+        insert(`\n${indent}`);
+      }
+    });
+    root.querySelectorAll('[data-snippet]').forEach((button) => {
+      button.addEventListener('click', () => insert(button.dataset.snippet.replace(/\\n/g, '\n')));
+    });
+    textarea.focus();
+  }
+
+  // 블록 선택 창: START · ERASE · 카테고리 탭 → 펼친 카테고리의 블록(종류·★변형)
+  function toolButton(editor, tool, inner, title) {
+    return `<button class="tool-button ${editor.tool === tool ? 'active' : ''}" data-action="selectEditorTool" data-value="${tool}" title="${escapeHtml(title)}">${inner}</button>`;
+  }
+
+  function toolCategory(editor, tool) {
+    if (String(tool).startsWith('coded:')) return 'coded';
+    const kind = getEditorKind(editor, tool);
+    return kind ? categoryOfType(kind.type) : null;
+  }
+
+  function paletteMarkup(editor) {
+    const items = [
+      toolButton(editor, 'start', `<span class="tool-sprite sprite sprite-start${editor.startMode}" aria-hidden="true"></span>START`, 'start'),
+      toolButton(editor, 'erase', '⌫ ERASE', 'erase'),
+      '<span class="palette-divider" aria-hidden="true"></span>',
+    ];
+    const activeCategory = toolCategory(editor, editor.tool);
+    EDITOR_CATEGORIES.forEach((category) => {
+      const kinds = editor.kinds.filter((kind) => category.types.includes(kind.type));
+      const count = category.id === 'coded' ? editor.codedTools.length : kinds.length;
+      const icon = category.id === 'coded'
+        ? '<b class="code-mark">{}</b>'
+        : `<span class="tool-sprite sprite sprite-k-${kinds[0]?.id}" aria-hidden="true"></span>`;
+      const open = editor.paletteCategory === category.id;
+      items.push(`<button class="category-tab ${open ? 'open' : ''} ${activeCategory === category.id ? 'has-active' : ''}" data-action="togglePaletteCategory" data-value="${category.id}" aria-expanded="${open}">${icon}${category.label}<small>${count}</small><span class="caret" aria-hidden="true">${open ? '▴' : '▾'}</span></button>`);
+    });
+    return items.join('');
+  }
+
+  function paletteItemsMarkup(editor) {
+    const category = EDITOR_CATEGORIES.find((item) => item.id === editor.paletteCategory);
+    if (!category) return '';
+    if (category.id === 'coded') {
+      if (!editor.codedTools.length) return '<p class="palette-empty">블록에 코드를 저장하면 여기에 생깁니다.</p>';
+      return editor.codedTools.map((coded) => {
+        const kind = getEditorKind(editor, coded.kindId);
+        if (!kind) return '';
+        const tag = editorKindTag(kind);
+        return `<span class="coded-tool">${toolButton(editor, `coded:${coded.id}`, `<span class="tool-sprite sprite sprite-k-${kind.id}" aria-hidden="true"></span><b class="code-mark">{}</b>${TYPE_LABELS[kind.type]}<small class="tag-chip">${escapeHtml(tag)}</small>`, `코드 블록 · 테그: ${tag}\n${coded.code}`)}<button class="coded-remove" data-action="removeCodedTool" data-value="${coded.id}" title="목록에서 빼기" aria-label="코드 블록 목록에서 빼기">×</button></span>`;
+      }).join('');
+    }
+    return category.types.flatMap((type) => editor.kinds.filter((kind) => kind.type === type)).map((kind) => {
+      const tag = editorKindTag(kind);
+      const chip = tag !== kind.type ? `<small class="tag-chip">${escapeHtml(tag)}</small>` : '';
+      return toolButton(editor, kind.id, `<span class="tool-sprite sprite sprite-k-${kind.id}" aria-hidden="true"></span>${TYPE_LABELS[kind.type]}${kind.base ? '' : ' ★'}${chip}`, `테그: ${tag}`);
+    }).join('');
+  }
+
+
+  function pixelClass(token) {
+    if (token === EMPTY_PX) return 'px-empty';
+    if (token === TRANSPARENT_PX) return 'px-transparent';
+    if (token.length === 9) return 'px-alpha';
+    return '';
+  }
+
+  function pixelLabel(token) {
+    if (token === EMPTY_PX) return '빈 칸 (히트박스 없음)';
+    if (token === TRANSPARENT_PX) return '투명 (히트박스 있음)';
+    return `${token} (히트박스 있음)`;
+  }
+
+  function designOverlayMarkup(editor) {
+    const design = editor.design;
+    const kind = getEditorKind(editor, design.kindId) || editor.kinds[0];
+    const tokens = kind.design;
+    const tag = editorKindTag(kind);
+    const usedBy = editor.blocks.filter((block) => block.kindId === kind.id).length;
+    const presets = ['#ffffff', '#000000', '#ff9f5d', '#813f29', '#ff6b8a', '#53d1ff', '#355c8f', '#6fd5ff',
+      '#2f7d5b', '#b6ffd5', '#4b4ab0', '#a9a6ff', '#ffe04d', '#ffd35b', '#ff78cb', '#57ff8a', '#6b69ff', '#17365f'];
+    const used = tokens.filter((token) => token !== EMPTY_PX && token !== TRANSPARENT_PX);
+    const swatches = [...new Set([...used, ...presets])].slice(0, 30);
+    const colorValue = design.color.slice(0, 7);
+    const hitboxCount = designHitboxCount(tokens);
+    const modified = !designsEqual(tokens, DEFAULT_DESIGNS[kind.type]);
+    const brushes = [
+      { id: 'color', label: '🖌 COLOR' },
+      { id: 'transparent', label: '▦ TRANSPARENT' },
+      { id: 'empty', label: '· EMPTY' },
+      { id: 'pick', label: '💧 PICK' },
+    ];
+
+    return `
+      <div class="design-overlay" role="dialog" aria-modal="true" aria-labelledby="design-title">
+        <div class="design-panel">
+          <div class="design-head">
+            <h3 id="design-title">PIXEL DESIGN · ${TYPE_LABELS[kind.type]}${kind.base ? '' : ' ★'}</h3>
+            <button class="pixel-button" data-action="closeDesign">DONE</button>
+          </div>
+          <p class="tag-line">블록 테그 <code class="tag-chip big">${escapeHtml(tag)}</code> · 이 디자인을 쓰는 블록 ${usedBy}개 · 디자인이 바뀌면 테그도 바뀝니다.</p>
+          <div class="design-types" aria-label="디자인할 블록">
+            ${editor.kinds.map((item) => `
+              <button class="tool-button ${item.id === kind.id ? 'active' : ''}" data-action="selectDesignType" data-value="${item.id}" title="테그: ${escapeHtml(editorKindTag(item))}"><span class="tool-sprite sprite sprite-k-${item.id}" aria-hidden="true"></span>${TYPE_LABELS[item.type]}${item.base ? '' : ' ★'}</button>
+            `).join('')}
+          </div>
+          <div class="design-body">
+            <div class="design-grid ${design.showHitbox ? 'show-hitbox' : ''}" aria-label="8×8 픽셀 그리드">
+              ${tokens.map((token, index) => `<button type="button" class="design-px ${pixelClass(token)}" data-px="${index}" style="--px:${token === EMPTY_PX ? 'transparent' : token}" title="${index + 1}번 픽셀 · ${pixelLabel(token)}"></button>`).join('')}
+            </div>
+            <div class="design-side">
+              <h4>BRUSH</h4>
+              <div class="design-brushes">
+                ${brushes.map((brush) => `<button class="mode-button ${design.brush === brush.id ? 'active' : ''}" data-action="setDesignBrush" data-value="${brush.id}">${brush.label}</button>`).join('')}
+              </div>
+              <div class="design-swatches">
+                <input id="design-color" class="design-color" type="color" value="${colorValue}" aria-label="픽셀 색">
+                ${swatches.map((hex) => `<button class="swatch ${design.brush === 'color' && design.color === hex ? 'active' : ''}" style="--sw:${hex}" data-action="setDesignColor" data-value="${hex}" title="${hex}" aria-label="${hex}"></button>`).join('')}
+              </div>
+              <p>색 = 보이고 히트박스 O · <b>투명</b> = 안 보이지만 히트박스 O · <b>빈 칸</b> = 히트박스 X</p>
+              <div class="design-actions">
+                <button class="tool-button" data-action="designFillAll">FILL ALL</button>
+                <button class="tool-button" data-action="designClearAll">CLEAR</button>
+                <button class="tool-button" data-action="designReset" ${modified ? '' : 'disabled'}>RESET</button>
+                <button class="tool-button ${design.showHitbox ? 'active' : ''}" data-action="toggleDesignHitbox">HITBOX ${design.showHitbox ? 'ON' : 'OFF'}</button>
+              </div>
+              <div class="design-actions">
+                <button class="tool-button" data-action="newDesignVariant" title="지금 디자인을 복사해 새 블록 종류로 만들기">＋ NEW VARIANT</button>
+                <button class="tool-button" data-action="deleteDesignVariant" ${kind.base ? 'disabled' : ''}>DELETE VARIANT</button>
+              </div>
+              <h4>PREVIEW · 히트박스 ${hitboxCount}/64</h4>
+              <div class="design-preview">
+                <span class="sprite sprite-k-${kind.id}" style="width:80px;height:80px"></span>
+                <span class="sprite sprite-k-${kind.id}" style="width:40px;height:40px"></span>
+              </div>
+              <h4>CODE (#hex 64개)</h4>
+              <textarea id="design-code" class="design-code" spellcheck="false" aria-label="디자인 코드">design(${tag}, ${tokens.join(', ')})</textarea>
+              <div class="design-actions">
+                <button class="tool-button" data-action="applyDesignCode">APPLY CODE</button>
+              </div>
+              <p class="editor-status">${escapeHtml(design.status || '그리드를 클릭하거나 드래그해서 칠하세요.')}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // 디자인 그리드 칠하기: 드래그 중에는 화면만 바꾸고, 손을 떼면 저장
+  function attachDesignPointer(editor, gridEl) {
+    const tokens = [...(getEditorKind(editor, editor.design.kindId) || editor.kinds[0]).design];
+    let painting = false;
+    let changed = false;
+
+    const brushToken = () => {
+      const { brush, color } = editor.design;
+      if (brush === 'transparent') return TRANSPARENT_PX;
+      if (brush === 'empty') return EMPTY_PX;
+      return normalizePixelToken(color) || '#ffffff';
+    };
+
+    const paint = (el) => {
+      const index = Number(el.dataset.px);
+      const token = brushToken();
+      if (tokens[index] === token) return;
+      tokens[index] = token;
+      el.className = `design-px ${pixelClass(token)}`;
+      el.style.setProperty('--px', token === EMPTY_PX ? 'transparent' : token);
+      changed = true;
+    };
+
+    const pixelAt = (event) => {
+      const el = document.elementFromPoint(event.clientX, event.clientY)?.closest?.('[data-px]');
+      return el && gridEl.contains(el) ? el : null;
+    };
+
+    gridEl.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      const el = pixelAt(event);
+      if (!el) return;
+      event.preventDefault();
+      if (editor.design.brush === 'pick') {
+        onAction('pickDesignColor', tokens[Number(el.dataset.px)]);
+        return;
+      }
+      painting = true;
+      changed = false;
+      gridEl.setPointerCapture?.(event.pointerId);
+      paint(el);
+    });
+
+    gridEl.addEventListener('pointermove', (event) => {
+      if (!painting) return;
+      const el = pixelAt(event);
+      if (el) paint(el);
+    });
+
+    const finish = () => {
+      if (!painting) return;
+      painting = false;
+      if (changed) onAction('commitDesignPixels', [...tokens]);
+    };
+    gridEl.addEventListener('pointerup', finish);
+    gridEl.addEventListener('pointercancel', finish);
+  }
 
   function showStart() {
     hud.classList.add('hidden');
@@ -1191,7 +3537,7 @@ function createScreenManager({
       title: 'GEOMETRY DASH CLONE',
       body: `
         <p>Retro clone-built arcade action with procedural stages, pixel art, and touch/keyboard controls.</p>
-        <p class="tip">Tap / click / <span class="flashy">Space</span> to jump as the cube. Hold to fly as the ship.</p>
+        <p class="tip">Tap / click / <span class="flashy">Space</span> · 8 modes: Cube, Ship, Ball, UFO, Wave, Robot, Spider, Swing</p>
       `,
       buttons: `
         <button class="pixel-button" data-action="openCharacterSelect">PLAY</button>
@@ -1202,13 +3548,120 @@ function createScreenManager({
     bindButtons(root, handlers);
   }
 
+  // 그리드 포인터 처리: MOVE ON → 화면 이동 / MOVE OFF → 클릭 배치 · 드래그 직사각형 채우기
+  function attachEditorPointer(editor, scroller, grid) {
+    const cellMap = new Map();
+    grid.querySelectorAll('[data-cell]').forEach((el) => cellMap.set(el.dataset.cell, el));
+    let drag = null;
+
+    const cellAt = (clientX, clientY) => {
+      const el = document.elementFromPoint(clientX, clientY)?.closest?.('[data-cell]');
+      if (!el || !grid.contains(el)) return null;
+      const [x, y] = el.dataset.cell.split(',').map(Number);
+      return { x, y };
+    };
+
+    const clearPreview = () => {
+      grid.querySelectorAll('.drag-preview').forEach((el) => el.classList.remove('drag-preview', 'drag-erase'));
+    };
+
+    const paintPreview = () => {
+      clearPreview();
+      const minX = Math.min(drag.start.x, drag.end.x);
+      const maxX = Math.max(drag.start.x, drag.end.x);
+      const minY = Math.min(drag.start.y, drag.end.y);
+      const maxY = Math.max(drag.start.y, drag.end.y);
+      for (let y = minY; y <= maxY; y += 1) {
+        for (let x = minX; x <= maxX; x += 1) {
+          const el = cellMap.get(`${x},${y}`);
+          if (!el) continue;
+          el.classList.add('drag-preview');
+          if (editor.tool === 'erase') el.classList.add('drag-erase');
+        }
+      }
+    };
+
+    grid.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+      if (editor.moveMode) {
+        drag = {
+          kind: 'pan',
+          px: event.clientX,
+          py: event.clientY,
+          left: scroller.scrollLeft,
+          top: scroller.scrollTop,
+        };
+        scroller.classList.add('panning');
+      } else {
+        const cell = cellAt(event.clientX, event.clientY);
+        if (!cell) return;
+        drag = { kind: 'rect', start: cell, end: cell };
+        paintPreview();
+      }
+      grid.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
+    });
+
+    grid.addEventListener('pointermove', (event) => {
+      if (!drag) return;
+      if (drag.kind === 'pan') {
+        scroller.scrollLeft = drag.left - (event.clientX - drag.px);
+        scroller.scrollTop = drag.top - (event.clientY - drag.py);
+        return;
+      }
+      const cell = cellAt(event.clientX, event.clientY);
+      if (cell && (cell.x !== drag.end.x || cell.y !== drag.end.y)) {
+        drag.end = cell;
+        paintPreview();
+      }
+    });
+
+    const finish = (cancelled) => {
+      if (!drag) return;
+      const done = drag;
+      drag = null;
+      scroller.classList.remove('panning');
+
+      if (done.kind === 'pan') {
+        // 끝까지 옮기면 맵 확장
+        const nearRight = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 40;
+        const nearTop = scroller.scrollTop <= 20;
+        if (nearRight) handlers.expandEditor('right');
+        else if (nearTop) handlers.expandEditor('up');
+        return;
+      }
+
+      clearPreview();
+      if (cancelled) return;
+      const { start, end } = done;
+      if (start.x === end.x && start.y === end.y) {
+        handlers.placeEditorBlock(`${start.x},${start.y}`);
+      } else {
+        handlers.fillEditorRect(`${start.x},${start.y},${end.x},${end.y}`);
+      }
+    };
+
+    grid.addEventListener('pointerup', () => finish(false));
+    grid.addEventListener('pointercancel', () => finish(true));
+
+    // 키보드(Enter/Space)로 칸 누르기
+    grid.addEventListener('click', (event) => {
+      if (event.detail !== 0 || editor.moveMode) return;
+      const el = event.target.closest('[data-cell]');
+      if (el) handlers.placeEditorBlock(el.dataset.cell);
+    });
+  }
+
   function showPodEditor(editor, scrollPosition = null, scrollShiftY = 0) {
     hud.classList.add('hidden');
+    const blockMap = new Map();
+    editor.blocks.forEach((block) => blockMap.set(`${Math.floor(block.x)},${Math.floor(block.y)}`, block));
+
     const cells = [];
     for (let y = editor.rows - 1; y >= 0; y -= 1) {
       for (let x = 0; x < editor.cols; x += 1) {
-        const block = editor.blocks.find((item) => Math.floor(item.x) === x && Math.floor(item.y) === y);
-        const isSelected = block?.id === editor.selectedId;
+        const block = blockMap.get(`${x},${y}`);
+        const isSelected = block && block.id === editor.selectedId;
         const isClear = Math.floor(editor.clearX) === x;
         const classes = [
           'grid-cell',
@@ -1216,23 +3669,29 @@ function createScreenManager({
           isSelected ? 'selected' : '',
           isClear ? 'clear-column' : '',
         ].filter(Boolean).join(' ');
+        const rotationText = block && block.type !== 'start' && block.rotation
+          ? `, ${formatMapNumber(block.rotation)}°`
+          : '';
         const label = block
-          ? `${block.type} (${formatMapNumber(block.x)}, ${formatMapNumber(block.y)})`
+          ? `${editorBlockTag(editor, block)} (${formatMapNumber(block.x)}, ${formatMapNumber(block.y)}${rotationText})${block.code ? ' · 코드 있음' : ''}`
           : `빈 칸 (${x}, ${y})`;
-        cells.push(`
-          <button class="${classes}" data-action="placeEditorBlock" data-value="${x},${y}" title="${label}" aria-label="${label}">
-            ${editorBlockMarkup(editor, block)}
-            ${y === 0 ? `<small>${x}</small>` : ''}
-          </button>
-        `);
+        cells.push(`<button type="button" class="${classes}" data-cell="${x},${y}" title="${label}" aria-label="${label}">${editorBlockMarkup(editor, block)}${y === 0 ? `<small>${x}</small>` : ''}</button>`);
       }
     }
 
     const selectedBlock = editor.blocks.find((block) => block.id === editor.selectedId);
+    const selectedRotatable = Boolean(selectedBlock && selectedBlock.type !== 'start');
+    const rotationValue = selectedRotatable ? selectedBlock.rotation || 0 : editor.placeRotation;
+    const rotationTarget = selectedRotatable
+      ? `선택한 ${TYPE_LABELS[selectedBlock.type]} 블록에 적용 (히트박스도 함께 회전)`
+      : '새로 놓을 블록에 적용';
+    const selectedTag = selectedBlock ? editorBlockTag(editor, selectedBlock) : '';
+    const codeLines = selectedBlock?.code ? selectedBlock.code.split('\n').filter((line) => line.trim()).length : 0;
+
     const codePanel = editor.exportedCode
       ? `
           <div class="map-code-wrap">
-            <textarea id="map-code-output" class="map-code" readonly aria-label="내보낸 맵 코드">${editor.exportedCode}</textarea>
+            <textarea id="map-code-output" class="map-code" readonly aria-label="내보낸 맵 코드">${escapeHtml(editor.exportedCode)}</textarea>
             <button class="tool-button" data-action="copyMapCode">COPY</button>
           </div>
         `
@@ -1240,31 +3699,34 @@ function createScreenManager({
 
     root.innerHTML = `
       <section class="screen editor-screen">
+        ${spriteStyleBlock(editor)}
         <button class="editor-close" data-action="requestPodExit" aria-label="맵 에디터 닫기">×</button>
         <h2>POD MAP EDITOR</h2>
         <div class="editor-toolbar">
           <div class="editor-toolbar-row">
             <span class="editor-label">START MODE</span>
-            <button class="mode-button ${editor.startMode === 'Cube' ? 'active' : ''}" data-action="setEditorMode" data-value="Cube">CUBE</button>
-            <button class="mode-button ${editor.startMode === 'Airplane' ? 'active' : ''}" data-action="setEditorMode" data-value="Airplane">AIRPLANE</button>
+            ${MODES.map((mode) => `<button class="mode-button ${editor.startMode === mode.code ? 'active' : ''}" data-action="setEditorMode" data-value="${mode.code}"><span class="tool-sprite sprite sprite-start${mode.code}" aria-hidden="true"></span>${mode.label}</button>`).join('')}
+            <span class="editor-label">VIEW</span>
+            <button class="mode-button move-toggle ${editor.moveMode ? 'active' : ''}" data-action="toggleMoveMode" aria-pressed="${editor.moveMode}">✥ MOVE ${editor.moveMode ? 'ON' : 'OFF'}</button>
           </div>
           <div class="editor-toolbar-row">
             <span class="editor-label">BLOCK</span>
-            ${EDITOR_TOOLS.map((tool) => `
-              <button class="tool-button ${editor.tool === tool.type ? 'active' : ''}" data-action="selectEditorTool" data-value="${tool.type}">${tool.icon} ${tool.label}</button>
-            `).join('')}
+            ${paletteMarkup(editor)}
           </div>
+          ${editor.paletteCategory ? `<div class="editor-toolbar-row palette-items">${paletteItemsMarkup(editor)}</div>` : ''}
         </div>
 
         <div class="editor-workspace">
-          <div class="editor-grid-scroll" aria-label="맵 제작 그리드">
-            <div class="editor-grid" style="grid-template-columns:repeat(${editor.cols},38px);grid-template-rows:repeat(${editor.rows},38px)">${cells.join('')}</div>
+          <div class="editor-grid-scroll ${editor.moveMode ? 'move-mode' : ''}" aria-label="맵 제작 그리드">
+            <div class="editor-grid" style="grid-template-columns:repeat(${editor.cols},${EDITOR_CELL}px);grid-template-rows:repeat(${editor.rows},${EDITOR_CELL}px)">${cells.join('')}</div>
           </div>
           <aside class="editor-side">
             <h3>POSITION</h3>
             <p>${selectedBlock
-              ? `${selectedBlock.type}<br>X ${formatMapNumber(selectedBlock.x)} / Y ${formatMapNumber(selectedBlock.y)}`
+              ? `${TYPE_LABELS[selectedBlock.type]}<br>X ${formatMapNumber(selectedBlock.x)} / Y ${formatMapNumber(selectedBlock.y)}${selectedRotatable ? ` / ${formatMapNumber(selectedBlock.rotation || 0)}°` : ''}`
               : '그리드에서 블록을 놓거나 선택하세요.'}</p>
+            ${selectedBlock ? `<p>TAG <code class="tag-chip">${escapeHtml(selectedTag)}</code></p>` : ''}
+            <button class="tool-button code-button" data-action="openBlockCode" ${selectedRotatable ? '' : 'disabled'}>{} CODE${codeLines ? ` · ${codeLines}줄` : ''}</button>
             <button class="tool-button ${editor.fineMove ? 'active' : ''}" data-action="toggleFineMove">FINE MOVE ${editor.fineMove ? '0.1' : 'OFF'}</button>
             <div class="editor-nudge" aria-label="선택 블록 이동">
               <button class="nudge-button" data-action="nudgeSelected" data-value="left" ${selectedBlock ? '' : 'disabled'}>←</button>
@@ -1273,12 +3735,26 @@ function createScreenManager({
               <button class="nudge-button" data-action="nudgeSelected" data-value="right" ${selectedBlock ? '' : 'disabled'}>→</button>
             </div>
             <button class="tool-button" data-action="deleteSelected" ${selectedBlock ? '' : 'disabled'}>DELETE SELECTED</button>
+
+            <h3>ROTATE</h3>
+            <p>${rotationTarget}</p>
+            <div class="rotate-row" aria-label="회전">
+              <button class="nudge-button" data-action="rotateEditor" data-value="-90">⟲90</button>
+              <button class="nudge-button" data-action="rotateEditor" data-value="-15">⟲15</button>
+              <button class="nudge-button" data-action="rotateEditor" data-value="15">⟳15</button>
+              <button class="nudge-button" data-action="rotateEditor" data-value="90">⟳90</button>
+            </div>
+            <div class="clear-control">
+              <input id="editor-rotation" type="number" step="1" value="${formatMapNumber(rotationValue)}" aria-label="회전 각도">
+              <button class="tool-button" data-action="setEditorRotation">SET°</button>
+            </div>
+
             <h3>CLEAR X</h3>
             <div class="clear-control">
               <input id="editor-clear-x" type="number" min="0" step="0.1" value="${formatMapNumber(editor.clearX)}" aria-label="클리어 X 좌표">
               <button class="tool-button" data-action="setClearX">SET</button>
             </div>
-            <p class="editor-status">${editor.status || '한 칸에는 블록 하나만 놓을 수 있습니다.'}</p>
+            <p class="editor-status">${escapeHtml(editor.status || '클릭으로 한 칸, 드래그로 직사각형을 채웁니다. 한 칸에는 블록 하나만 놓을 수 있습니다.')}</p>
           </aside>
         </div>
 
@@ -1286,8 +3762,11 @@ function createScreenManager({
           ${codePanel}
           <div class="editor-actions">
             <button class="pixel-button" data-action="exportMapCode">맵 코드 내보내기</button>
+            <button class="pixel-button alt" data-action="openDesign" data-value="${getEditorKind(editor, editor.tool) ? editor.tool : selectedBlock?.kindId || ''}">🎨 PIXEL DESIGN</button>
           </div>
         </div>
+        ${editor.designOpen ? designOverlayMarkup(editor) : ''}
+        ${editor.codeEditor ? codeOverlayMarkup(editor) : ''}
         ${editor.exitConfirm ? `
           <div class="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="exit-confirm-title">
             <div class="confirm-dialog">
@@ -1304,33 +3783,24 @@ function createScreenManager({
     `;
     bindButtons(root, handlers);
 
-    if (scrollPosition) {
-      const scroller = root.querySelector('.editor-grid-scroll');
-      if (scroller) {
+    const scroller = root.querySelector('.editor-grid-scroll');
+    const grid = root.querySelector('.editor-grid');
+    if (scroller) {
+      if (scrollPosition) {
         scroller.scrollLeft = scrollPosition.left;
         scroller.scrollTop = scrollPosition.top + scrollShiftY;
+      } else {
+        scroller.scrollTop = scroller.scrollHeight;
       }
-    } else {
-      const scroller = root.querySelector('.editor-grid-scroll');
-      if (scroller) scroller.scrollTop = scroller.scrollHeight;
     }
+    if (scroller && grid) attachEditorPointer(editor, scroller, grid);
 
-    const scroller = root.querySelector('.editor-grid-scroll');
-    if (scroller) {
-      let expansionRequested = false;
-      scroller.addEventListener('scroll', () => {
-        if (expansionRequested) return;
-        const nearRight = scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 80;
-        const nearTop = scroller.scrollTop <= 30;
-        if (nearRight) {
-          expansionRequested = true;
-          handlers.expandEditor('right');
-        } else if (nearTop) {
-          expansionRequested = true;
-          handlers.expandEditor('up');
-        }
-      }, { passive: true });
-    }
+    const designGrid = root.querySelector('.design-grid');
+    if (designGrid) attachDesignPointer(editor, designGrid);
+    root.querySelector('#design-color')?.addEventListener('change', (event) => {
+      onAction('setDesignColor', event.target.value);
+    });
+    if (editor.codeEditor) attachCodeEditor(editor);
   }
 
   function showLoad({ draft = '', error = '', ready = null } = {}) {
@@ -1339,12 +3809,12 @@ function createScreenManager({
       <section class="screen load-screen">
         <h2>LOAD MAP CODE</h2>
         <p>내보낸 맵 코드를 붙여넣으면 검사한 뒤 바로 플레이할 수 있습니다.</p>
-        <textarea id="load-code-input" class="load-code-input" spellcheck="false" aria-label="불러올 맵 코드" placeholder="startMode(Cube)&#10;block(start, 0, 0)&#10;block(thorn, 5, 0)&#10;clear(10)">${escapeHtml(draft)}</textarea>
+        <textarea id="load-code-input" class="load-code-input" spellcheck="false" aria-label="불러올 맵 코드" placeholder="startMode(Cube)&#10;block(start, 0, 0)&#10;block(thorn, 5, 0)&#10;code{&#10;    wT:&#10;        rot(5)&#10;}&#10;block(square, 9, 0)&#10;clear(14)">${escapeHtml(draft)}</textarea>
         <p class="load-status ${error ? 'error' : ''}">${error ? escapeHtml(error) : ready ? `${ready.startMode} · 블록 ${ready.blocks.length}개 · CLEAR X ${formatMapNumber(ready.clearX)}` : ''}</p>
         <div class="button-row">
           <button class="pixel-button alt" data-action="backToMenu">MENU</button>
           <button class="pixel-button" data-action="loadMapCode">코드 불러오기</button>
-          ${ready ? '<button class="pixel-button pod" data-action="playLoadedMap">PLAY MAP</button>' : ''}
+          ${ready ? '<button class="pixel-button pod" data-action="playLoadedMap">PLAY MAP</button><button class="pixel-button practice" data-action="practiceLoadedMap">PRACTICE</button>' : ''}
         </div>
       </section>
     `;
@@ -1354,24 +3824,22 @@ function createScreenManager({
   function showCharacterSelect({ selectedCharacter }) {
     hud.classList.add('hidden');
     root.innerHTML = `
-      <section class="screen">
+      <section class="screen wide">
         <h2>CHOOSE YOUR RUNNER</h2>
-        <p>Select a style. Each character has four seeded stages and its own feel.</p>
-        <div class="card-row">
-          <button class="character-card ${selectedCharacter === 'cube' ? 'selected' : ''}" data-action="selectCharacter" data-value="cube">
-            <canvas width="180" height="180" data-preview="cube"></canvas>
-            <strong>CUBE</strong>
-            <p class="tip">Ground runner with timed jumps and jump pads.</p>
-          </button>
-          <button class="character-card ${selectedCharacter === 'ship' ? 'selected' : ''}" data-action="selectCharacter" data-value="ship">
-            <canvas width="180" height="180" data-preview="ship"></canvas>
-            <strong>SHIP</strong>
-            <p class="tip">Smooth thrust flight through tight pixel tunnels.</p>
-          </button>
+        <p>모드마다 조작이 다르고, 각각 4개의 스테이지가 있습니다.</p>
+        <div class="character-grid">
+          ${MODES.map((mode) => `
+            <button class="character-card ${selectedCharacter === mode.id ? 'selected' : ''}" data-action="selectCharacter" data-value="${mode.id}">
+              <canvas width="96" height="96" data-preview="${mode.id}"></canvas>
+              <strong>${mode.label}</strong>
+              <span class="tip">${mode.desc}</span>
+            </button>
+          `).join('')}
         </div>
         <div class="button-row">
           <button class="pixel-button alt" data-action="backToMenu">MENU</button>
           <button class="pixel-button" data-action="beginRun">START RUN</button>
+          <button class="pixel-button practice" data-action="beginPractice">PRACTICE</button>
         </div>
       </section>
     `;
@@ -1393,14 +3861,36 @@ function createScreenManager({
       `,
       buttons: `
         <button class="pixel-button danger" data-action="retryStage">RETRY?</button>
+        <button class="pixel-button practice" data-action="practiceStage">PRACTICE</button>
         <button class="pixel-button alt" data-action="backToMenu">MENU</button>
       `,
     });
     bindButtons(root, handlers);
   }
 
-  function showClear({ attempts, timeTaken, stageNumber, isLastStage, isCustom = false }) {
+  function showClear({ attempts, timeTaken, stageNumber, isLastStage, isCustom = false, isPractice = false, checkpoints = 0 }) {
     hud.classList.add('hidden');
+    if (isPractice) {
+      root.innerHTML = screenMarkup({
+        title: 'PRACTICE CLEAR!',
+        body: `
+          <div class="mini-stats">
+            <div>ATTEMPTS: <span class="flashy">${attempts}</span></div>
+            <div>CHECKPOINTS: <span class="flashy">${checkpoints}</span></div>
+            <div>STAGE: <span class="flashy">${stageNumber}</span></div>
+          </div>
+          <p class="tip">연습 기록은 일반 기록에 들어가지 않습니다.</p>
+        `,
+        buttons: `
+          <button class="pixel-button practice" data-action="retryStage">PRACTICE AGAIN</button>
+          <button class="pixel-button" data-action="playNormal">NORMAL MODE</button>
+          ${!isCustom && !isLastStage ? '<button class="pixel-button practice" data-action="nextStage">NEXT STAGE (PRACTICE)</button>' : ''}
+          <button class="pixel-button alt" data-action="backToMenu">MENU</button>
+        `,
+      });
+      bindButtons(root, handlers);
+      return;
+    }
     root.innerHTML = screenMarkup({
       title: isCustom ? 'CUSTOM MAP CLEAR!' : stageNumber >= 4 ? 'RUN COMPLETE!' : 'STAGE CLEAR!',
       body: `
@@ -1433,10 +3923,11 @@ function createScreenManager({
     hud.classList.remove('hidden');
   }
 
-  function updateHud({ progress, stage, character }) {
+  function updateHud({ progress, stage, character, practice = false }) {
     progressFill.style.width = `${Math.max(0, Math.min(100, progress * 100))}%`;
     progressLabel.textContent = `${Math.round(progress * 100)}%`;
-    stageIndicator.textContent = `STAGE ${stage}`;
+    stageIndicator.textContent = `STAGE ${stage}${practice ? ' · PRACTICE' : ''}`;
+    hud.classList.toggle('practice', practice);
     characterIndicator.textContent = character.toUpperCase();
   }
 
@@ -1464,10 +3955,14 @@ const progressLabel = document.getElementById('progress-label');
 const stageIndicator = document.getElementById('stage-indicator');
 const characterIndicator = document.getElementById('character-indicator');
 const screenRoot = document.getElementById('screen-root');
+const practiceBar = document.getElementById('practice-bar');
 
 const ctx = canvas.getContext('2d');
 const DPR = window.devicePixelRatio || 1;
 
+const CUBE_GRAVITY = 1800;
+const SHIP_GRAVITY = 980;
+const ORB_SHIP_IMPULSE = -480;
 
 const BUTTON_SOUND = 'sound/geometry-dash-click-sound.mp3';
 const DEATH_SOUND = 'sound/geometry-dash-death-sound-effect.mp3';
@@ -1486,7 +3981,9 @@ const app = {
   editor: {
     startMode: 'Cube',
     tool: 'start',
+    moveMode: false,
     fineMove: false,
+    placeRotation: 0,
     cols: 64,
     rows: 16,
     blocks: [],
@@ -1496,18 +3993,37 @@ const app = {
     exportedCode: '',
     status: '',
     exitConfirm: false,
+    // 블록 종류: 기본 10종(id = 이름) + NEW VARIANT로 만든 종류. 테그는 디자인으로 정해짐
+    kinds: DESIGN_TYPES.map((type) => ({ id: type, type, design: [...DEFAULT_DESIGNS[type]], base: true })),
+    nextKindId: 1,
+    codedTools: [],    // 코드 넣은 블록 (블록 선택 창에서 다시 고를 수 있음)
+    paletteCategory: 'blocks', // 펼쳐 둔 블록 카테고리 (null = 접힘)
+    nextCodedId: 1,
+    codeEditor: null,  // { blockId, draft, error }
+    designOpen: false,
+    design: {
+      kindId: 'thorn',
+      brush: 'color',
+      color: '#ff9f5d',
+      showHitbox: false,
+      status: '',
+    },
   },
   loadDraft: '',
   loadError: '',
   loadedMapSpec: null,
   isCustomRun: false,
+  practiceMode: false,               // 연습 모드로 시작했는가
+  practice: null,                    // 연습 모드 진행 상태 (체크포인트 등)
   customAttempts: 0,
   currentStage: 1,
   attempts: {
+    ...Object.fromEntries(MODES.map((mode) => [mode.id, [0, 0, 0, 0, 0]])),
     cube: [0, 0, 0, 0, 0],
     ship: [0, 0, 0, 0, 0],
   },
   maps: {
+    ...Object.fromEntries(MODES.map((mode) => [mode.id, new Map()])),
     cube: new Map(),
     ship: new Map(),
   },
@@ -1522,9 +4038,11 @@ const app = {
   world: null,
   player: null,
   cameraX: 0,
+  cameraY: 0,
   stageStartMs: 0,
   speedEffect: null,
   padTriggers: new Set(),
+  touchingOrb: null,
   lastFrameMs: 0,
   audioUnlocked: false,
   audio: {
@@ -1611,28 +4129,62 @@ function getStageMap(character, stageNumber) {
   return characterMaps.get(stageNumber);
 }
 
+const PLAYER_SIZES = {
+  cube: [28, 28],
+  ship: [36, 24],
+  ball: [28, 28],
+  ufo: [30, 24],
+  wave: [16, 16],
+  robot: [26, 30],
+  spider: [30, 22],
+  swing: [30, 26],
+};
+
 function createPlayer(character, world = null) {
   const startGridY = world?.startGridY || 0;
-  return character === 'ship'
-    ? {
-        character,
-        w: 36,
-        h: 24,
-        screenX: 170,
-        y: world ? Math.max(10, GROUND_Y - 24 - startGridY * TILE) : 260,
-        vy: 0,
-        rotation: 0,
-      }
-    : {
-        character,
-        w: 28,
-        h: 28,
-        screenX: 170,
-        y: GROUND_Y - 28 - startGridY * TILE,
-        vy: 0,
-        grounded: true,
-        rotation: 0,
-      };
+  const [w, h] = PLAYER_SIZES[character] || PLAYER_SIZES.cube;
+  const flying = FLYING_MODES.has(character);
+  return {
+    character,
+    w,
+    h,
+    screenX: 170,
+    // 나는 모드: 커스텀 맵은 시작 칸 가운데, 기본 맵은 화면 가운데 / 나머지: 바닥(시작 칸) 위
+    y: flying
+      ? world ? GROUND_Y - (startGridY + 1) * TILE + (TILE - h) / 2 : 260
+      : GROUND_Y - h - startGridY * TILE,
+    vy: 0,
+    gravity: 1,
+    grounded: !flying && startGridY === 0,
+    groundOwner: null,
+    rotation: 0,
+    boostTimer: 0,
+    flipBuffer: 0,
+    trail: [],
+    flash: null,
+    dash: null,         // 화살표 공점 돌진 중 { angle, slope }
+    swingInvert: false, // 스윙 위아래 뒤바뀜 (초록 공점)
+  };
+}
+
+// 모드 포털: 중심 높이를 유지한 채 모드 전환
+function switchPlayerMode(mode) {
+  const player = app.player;
+  if (!player || player.character === mode) return;
+  const centerY = player.y + player.h / 2;
+  const template = createPlayer(mode);
+  player.character = mode;
+  player.w = template.w;
+  player.h = template.h;
+  player.y = centerY - player.h / 2;
+  player.vy *= 0.5;
+  player.grounded = false;
+  player.rotation = 0;
+  player.boostTimer = 0;
+  player.flipBuffer = 0;
+  player.trail = [];
+  // 중력 방향은 모드가 바뀌어도 유지 (스윙은 지금 중력에 맞춰 위아래 기준을 정함)
+  if (mode === 'swing') player.swingInvert = gravityOf(player) === -1;
 }
 
 function resizeCanvas() {
@@ -1698,7 +4250,7 @@ function triangleCollision(rect, obstacle) {
           { x: x + w, y: y + h },
         ];
 
-  const rectPoints = [
+  const rectPointsList = [
     { x: rect.x, y: rect.y },
     { x: rect.x + rect.w, y: rect.y },
     { x: rect.x, y: rect.y + rect.h },
@@ -1706,21 +4258,38 @@ function triangleCollision(rect, obstacle) {
     { x: rect.x + rect.w / 2, y: rect.y + rect.h / 2 },
   ];
 
-  if (rectsOverlap(rect, obstacle) && rectPoints.some((point) => pointInTriangle(point.x, point.y, points[0], points[1], points[2]))) {
+  if (rectsOverlap(rect, obstacle) && rectPointsList.some((point) => pointInTriangle(point.x, point.y, points[0], points[1], points[2]))) {
     return true;
   }
 
   return rectsOverlap(rect, obstacle) && points.some((point) => point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
 }
 
+/* ---------- 패드 · 공점 · 포털 ---------- */
 function applyPadEffect(pad) {
   if (!pad || app.padTriggers.has(pad.id)) return;
   app.padTriggers.add(pad.id);
+
+  if (pad.type === 'portal') {
+    if (app.player.character !== pad.mode) playSfx('click');
+    switchPlayerMode(pad.mode);
+    return;
+  }
+
   playSfx('click');
 
-  if (pad.type === 'jump' && app.player.character === 'cube') {
-    app.player.vy = -pad.power;
-    app.player.grounded = false;
+  if (pad.type === 'jump') {
+    // 점프 패드: 중력 반대 방향으로 튕겨 냄 (웨이브는 영향 없음)
+    const player = app.player;
+    const dir = gravityOf(player);
+    if (player.character === 'ship' || player.character === 'swing') {
+      player.vy = -pad.power * 0.55 * dir;
+    } else if (player.character !== 'wave') {
+      player.vy = -pad.power * dir;
+      player.grounded = false;
+      player.boostTimer = 0;
+    }
+    if (pad.owner) pad.owner.jumped = true;
   }
 
   if (pad.type === 'boost' || pad.type === 'slow') {
@@ -1731,28 +4300,372 @@ function applyPadEffect(pad) {
   }
 }
 
-function collidePlayer() {
+function handleTriggers() {
   const rect = getPlayerRect();
-  if (!rect || !app.world) return false;
-
-  for (const obstacle of app.world.obstacles) {
-    if (obstacle.type === 'block' && rectsOverlap(rect, obstacle)) {
-      return true;
-    }
-    if ((obstacle.type === 'spikeUp' || obstacle.type === 'spikeDown') && triangleCollision(rect, obstacle)) {
-      return true;
-    }
-  }
-
+  app.touchingOrb = null;
+  if (!rect || !app.world) return;
+  let playerPolygon = null;
   for (const pad of app.world.pads) {
-    if (rectsOverlap(rect, pad)) {
-      if (pad.type === 'jump' || pad.type === 'boost' || pad.type === 'slow') {
-        applyPadEffect(pad);
+    if (!rectsOverlap(rect, pad)) continue;
+    if (pad.parts) {
+      playerPolygon = playerPolygon || rectPoints(rect.x, rect.y, rect.w, rect.h);
+      if (!pad.parts.some((part) => polygonsOverlap(playerPolygon, part))) continue;
+    }
+    if (pad.type === 'dashStop') {
+      endDash(app.player); // S블록: 화살표 공점 돌진 강제 중단
+      continue;
+    }
+    if (ORB_PAD_TYPES.has(pad.type)) {
+      if (!app.padTriggers.has(pad.id)) app.touchingOrb = pad;
+      continue;
+    }
+    applyPadEffect(pad);
+  }
+}
+
+// 공점: 닿아 있는 동안 클릭하면 공중에서도 점프 (공점 하나당 1회)
+const ORB_PAD_TYPES = new Set(['orb', 'orbGreen', 'orbBlack', 'orbDash']);
+const ORB_BLOCK_TYPES = new Set(['nextJump', 'greenOrb', 'blackOrb', 'dashOrb']);
+
+function useOrb() {
+  const orb = app.touchingOrb;
+  if (!orb || orb.type !== 'orb') return false;
+  app.padTriggers.add(orb.id);
+  if (orb.owner) orb.owner.jumped = true;
+  app.touchingOrb = null;
+  playSfx('click');
+  return true;
+}
+
+/* ---------- 밟을 수 있는 블록(square, slope) ---------- */
+function solidsNear(rect) {
+  if (!app.world?.solids?.length) return [];
+  return app.world.solids.filter((solid) => solid.x < rect.x + rect.w + 2 && solid.x + solid.w > rect.x - 2);
+}
+
+function worldHasGround() {
+  return Boolean(app.world?.custom || app.world?.type === 'cube' || app.world?.type === 'gravity');
+}
+
+function findFloor(rect, prevBottom, dx, snapAllowed) {
+  let best = null;
+  const bottom = rect.y + rect.h;
+  const centerX = rect.x + rect.w / 2;
+  // stepClimb: slope 픽셀 계단(최대 45°)을 오르내릴 수 있게 허용하는 높이
+  const consider = (y, grad, stepClimb = 0, owner = null) => {
+    const steep = Math.abs(grad) > MAX_WALKABLE_GRAD;
+    const slopeStep = (steep ? 0 : dx * Math.abs(grad)) + stepClimb;
+    const allowance = 6 + slopeStep;
+    const snap = snapAllowed && !steep ? slopeStep + 6 : 0;
+    if (bottom >= y - snap && prevBottom <= y + allowance) {
+      // 높이가 같으면 캐릭터 가운데 아래에 있는 블록을 밟은 것으로 (jump 판정용)
+      const underCenter = owner && owner.bounds && centerX >= owner.bounds.x && centerX < owner.bounds.x + owner.bounds.w;
+      if (!best || y < best.y - 0.01 || (Math.abs(y - best.y) <= 0.01 && underCenter && !best.underCenter)) {
+        best = { y, grad: steep ? 0 : grad, owner, underCenter };
       }
     }
-  }
+  };
 
+  if (worldHasGround()) consider(GROUND_Y, 0);
+  for (const solid of solidsNear(rect)) {
+    const surface = surfaceUnder(solid.points, rect.x + 1, rect.x + rect.w - 1, 'top');
+    if (surface) consider(surface.y, surface.grad, solid.kind === 'slope' ? dx + 1 : 0, solid.owner || null);
+  }
+  return best;
+}
+
+// 천장(블록 아랫면, 기본 통로 맵 천장). snapAllowed: 거꾸로 붙어 다닐 때 경사를 따라가기
+function findCeiling(rect, prevTop, dx, snapAllowed = false) {
+  let best = null;
+  const consider = (y, grad, extra = 0, owner = null) => {
+    const steep = Math.abs(grad) > MAX_WALKABLE_GRAD;
+    const slopeStep = (steep ? 0 : dx * Math.abs(grad)) + extra;
+    const allowance = 6 + slopeStep;
+    const snap = snapAllowed && !steep ? slopeStep + 6 : 0;
+    if (rect.y <= y + snap && prevTop >= y - allowance && (!best || y > best.y)) {
+      best = { y, grad: steep ? 0 : grad, owner };
+    }
+  };
+  if (app.world?.ceilingY != null) consider(app.world.ceilingY, 0);
+  for (const solid of solidsNear(rect)) {
+    const surface = surfaceUnder(solid.points, rect.x + 1, rect.x + rect.w - 1, 'bottom');
+    if (surface) consider(surface.y, surface.grad, solid.kind === 'slope' ? dx + 1 : 0, solid.owner || null);
+  }
+  return best;
+}
+
+// 착지 처리 후에도 square/slope 안에 박혀 있으면 = 옆이나 아래에서 부딪힘 → 사망
+function hitsSolidSide() {
+  const rect = getPlayerRect();
+  if (!rect) return false;
+  const inner = { x: rect.x + 3, y: rect.y + 3, w: rect.w - 6, h: rect.h - 6 };
+  const innerPoints = rectPoints(inner.x, inner.y, inner.w, inner.h);
+  return solidsNear(rect).some((solid) => rectsOverlap(inner, solid) && polygonsOverlap(innerPoints, solid.points));
+}
+
+function hitsHazard() {
+  const rect = getPlayerRect();
+  if (!rect || !app.world) return false;
+  let rectPolygon = null;
+
+  for (const obstacle of app.world.obstacles) {
+    if (obstacle.x > rect.x + rect.w + 4 || obstacle.x + obstacle.w < rect.x - 4) continue;
+    if (obstacle.type === 'block' && rectsOverlap(rect, obstacle)) return true;
+    if ((obstacle.type === 'spikeUp' || obstacle.type === 'spikeDown') && triangleCollision(rect, obstacle)) return true;
+    if (obstacle.type === 'pixelHazard' && rectsOverlap(rect, obstacle)) {
+      // 픽셀 히트박스: 캐릭터 쪽을 2px 줄여 약간 너그럽게
+      rectPolygon = rectPolygon || rectPoints(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+      if (obstacle.parts.some((part) => polygonsOverlap(rectPolygon, part))) return true;
+    }
+  }
   return false;
+}
+
+/* ---------- 연습 모드 (체크포인트) ---------- */
+const PRACTICE_AUTO_INTERVAL = 2;   // 2초마다 자동 체크포인트
+const PRACTICE_CONFIRM_TIME = 0.35; // 자동 체크포인트는 찍고 나서 이만큼 살아남아야 저장 (바로 죽는 자리 방지)
+const PRACTICE_RESPAWN_DELAY = 0.6;
+const PRACTICE_MAX_CHECKPOINTS = 400;
+
+function createPracticeState(active = false) {
+  return {
+    active,
+    checkpoints: [],
+    start: null,
+    sinceLast: 0,
+    pending: null,
+    dead: false,
+    respawnTimer: 0,
+    deathAt: null,
+    attempts: active ? 1 : 0,
+    flash: 0,
+  };
+}
+
+function snapshotBlock(block) {
+  return {
+    kind: block.kind,
+    type: block.type,
+    design: block.design, // px/convert는 항상 새 배열을 만들어서 참조만 들고 있어도 안전
+    x: block.x,
+    y: block.y,
+    rotation: block.rotation,
+    ghost: block.ghost,
+    hidden: block.hidden,
+    jumped: block.jumped,
+    vars: new Map(block.vars),
+  };
+}
+
+// 지금 순간을 통째로 저장 (코드가 없는 블록은 바뀌지 않으므로 저장하지 않음)
+function captureGameState(kind = 'auto') {
+  const world = app.world;
+  const player = app.player;
+  const state = {
+    kind,
+    cameraX: app.cameraX,
+    cameraY: app.cameraY,
+    player: { ...player },
+    speedEffect: app.speedEffect ? { ...app.speedEffect } : null,
+    padTriggers: new Set(app.padTriggers),
+    markerX: app.cameraX + player.screenX,
+    markerY: player.y + player.h / 2,
+  };
+  if (world?.custom) {
+    state.world = {
+      time: world.time,
+      globals: new Map(world.globals),
+      disabledKeys: { ...world.disabledKeys },
+      scripts: world.scripts.map((rt) => ({
+        done: rt.done,
+        waitUntil: rt.waitUntil,
+        stack: rt.stack.map((frame) => ({ ...frame })),
+        block: snapshotBlock(rt.block),
+      })),
+    };
+  }
+  return state;
+}
+
+function restoreGameState(state) {
+  const world = app.world;
+  app.cameraX = state.cameraX;
+  app.cameraY = state.cameraY;
+  Object.assign(app.player, state.player);
+  app.player.trail = [];
+  app.player.flash = null;
+  app.speedEffect = state.speedEffect ? { ...state.speedEffect } : null;
+  app.padTriggers = new Set(state.padTriggers);
+  app.touchingOrb = null;
+  app.input.justPressed = false;
+
+  if (world?.custom && state.world) {
+    world.time = state.world.time;
+    world.globals = new Map(state.world.globals);
+    world.disabledKeys = { ...state.world.disabledKeys };
+    world.scripts.forEach((rt, index) => {
+      const saved = state.world.scripts[index];
+      if (!saved) return;
+      rt.done = saved.done;
+      rt.waitUntil = saved.waitUntil;
+      rt.stack = saved.stack.map((frame) => ({ ...frame }));
+      const block = rt.block;
+      const { vars, ...fields } = saved.block;
+      Object.assign(block, fields);
+      block.vars.clear();
+      vars.forEach((value, key) => block.vars.set(key, value));
+      block.dirty = true;
+    });
+    world.scriptErrors = [];
+    rebuildWorldLists(world);
+  }
+}
+
+function setupPractice() {
+  app.practice = createPracticeState(app.practiceMode);
+  if (app.practice.active) app.practice.start = captureGameState('start');
+  updatePracticeBar();
+}
+
+function practiceActive() {
+  return Boolean(app.practice?.active && app.screen === SCREENS.PLAY);
+}
+
+function practiceDead() {
+  return Boolean(app.practice?.active && app.practice.dead);
+}
+
+function pushCheckpoint(state) {
+  const practice = app.practice;
+  practice.checkpoints.push(state);
+  if (practice.checkpoints.length > PRACTICE_MAX_CHECKPOINTS) practice.checkpoints.shift();
+  practice.flash = 0.5;
+  updatePracticeBar();
+}
+
+function addManualCheckpoint() {
+  if (!practiceActive() || app.practice.dead) return;
+  app.practice.pending = null;
+  app.practice.sinceLast = 0;
+  pushCheckpoint(captureGameState('manual'));
+  playSfx('click');
+}
+
+function removeLastCheckpoint() {
+  if (!practiceActive()) return;
+  const practice = app.practice;
+  practice.pending = null;
+  practice.sinceLast = 0;
+  if (practice.checkpoints.length) {
+    practice.checkpoints.pop();
+    playSfx('click');
+  }
+  updatePracticeBar();
+}
+
+// 매 프레임 (살아 있을 때): 자동 체크포인트
+function updatePracticeCheckpoints(dt) {
+  const practice = app.practice;
+  if (!practice?.active || practice.dead) return;
+  practice.flash = Math.max(0, practice.flash - dt);
+  if (practice.pending) {
+    practice.pending.age += dt;
+    if (practice.pending.age >= PRACTICE_CONFIRM_TIME) {
+      pushCheckpoint(practice.pending.state);
+      practice.pending = null;
+    }
+  }
+  practice.sinceLast += dt;
+  if (practice.sinceLast >= PRACTICE_AUTO_INTERVAL) {
+    practice.sinceLast = 0;
+    practice.pending = { state: captureGameState('auto'), age: 0 };
+  }
+}
+
+function practiceDeath() {
+  const practice = app.practice;
+  if (practice.dead) return;
+  playSfx('death');
+  practice.dead = true;
+  practice.pending = null; // 죽기 직전에 찍힌 자동 체크포인트는 버림
+  practice.respawnTimer = PRACTICE_RESPAWN_DELAY;
+  practice.deathAt = {
+    x: app.cameraX + app.player.screenX,
+    y: app.player.y + app.player.h / 2,
+    character: app.player.character,
+  };
+}
+
+function practiceRespawn() {
+  const practice = app.practice;
+  const target = practice.checkpoints[practice.checkpoints.length - 1] || practice.start;
+  restoreGameState(target);
+  practice.dead = false;
+  practice.deathAt = null;
+  practice.sinceLast = 0;
+  practice.pending = null;
+  practice.attempts += 1;
+  updatePracticeBar();
+}
+
+function updatePracticeBar() {
+  if (!practiceBar) return;
+  const practice = app.practice;
+  const count = practice?.checkpoints.length || 0;
+  practiceBar.querySelector('[data-practice-count]').textContent = `체크포인트 ${count} · 시도 ${practice?.attempts || 0}`;
+  practiceBar.querySelector('[data-practice="remove"]').disabled = count === 0;
+}
+
+let practiceBarShown = false;
+function syncPracticeBar() {
+  const show = practiceActive();
+  if (show === practiceBarShown) return;
+  practiceBarShown = show;
+  practiceBar?.classList.toggle('hidden', !show);
+  if (show) updatePracticeBar();
+}
+
+function drawCheckpoints(drawCtx) {
+  const practice = app.practice;
+  if (!practice?.active) return;
+  const list = practice.checkpoints;
+  list.forEach((checkpoint, index) => {
+    const x = checkpoint.markerX - app.cameraX;
+    if (x < -20 || x > 980) return;
+    const last = index === list.length - 1;
+    const size = last ? 9 + practice.flash * 10 : 6;
+    drawCtx.save();
+    drawCtx.translate(Math.round(x), Math.round(checkpoint.markerY));
+    drawCtx.rotate(Math.PI / 4);
+    drawCtx.globalAlpha = last ? 1 : 0.55;
+    drawCtx.fillStyle = checkpoint.kind === 'manual' ? '#89ff90' : '#57e0c8';
+    drawCtx.fillRect(-size / 2, -size / 2, size, size);
+    drawCtx.strokeStyle = '#0b2a1c';
+    drawCtx.lineWidth = 2;
+    drawCtx.strokeRect(-size / 2, -size / 2, size, size);
+    drawCtx.restore();
+  });
+}
+
+function drawPracticeDeath(drawCtx) {
+  const practice = app.practice;
+  if (!practice?.dead || !practice.deathAt) return;
+  const progress = 1 - practice.respawnTimer / PRACTICE_RESPAWN_DELAY;
+  const x = practice.deathAt.x - app.cameraX;
+  const y = practice.deathAt.y;
+  drawCtx.fillStyle = '#53d1ff';
+  drawCtx.globalAlpha = Math.max(0, 1 - progress);
+  for (let i = 0; i < 10; i += 1) {
+    const angle = (i / 10) * Math.PI * 2;
+    const distance = 8 + progress * 60;
+    drawCtx.fillRect(Math.round(x + Math.cos(angle) * distance - 3), Math.round(y + Math.sin(angle) * distance - 3), 6, 6);
+  }
+  drawCtx.globalAlpha = 1;
+}
+
+// 게임이 멈췄는가 (화면 전환 또는 연습 모드에서 죽어 있는 중)
+function runStopped() {
+  return app.screen !== SCREENS.PLAY || practiceDead();
 }
 
 function resetStage(stageNumber = app.currentStage) {
@@ -1761,30 +4674,36 @@ function resetStage(stageNumber = app.currentStage) {
   app.world = getStageMap(app.selectedCharacter, app.currentStage);
   app.player = createPlayer(app.selectedCharacter);
   app.cameraX = 0;
+  app.cameraY = 0;
   app.speedEffect = null;
   app.padTriggers = new Set();
+  app.touchingOrb = null;
   app.stageStartMs = performance.now();
-  app.attempts[app.selectedCharacter][app.currentStage] += 1;
+  if (!app.practiceMode) app.attempts[app.selectedCharacter][app.currentStage] += 1;
   app.screen = SCREENS.PLAY;
+  setupPractice();
   screenManager.showPlay();
-  screenManager.updateHud({ progress: 0, stage: app.currentStage, character: app.selectedCharacter });
+  screenManager.updateHud({ progress: 0, stage: app.currentStage, character: app.selectedCharacter, practice: app.practiceMode });
   void playStageMusic(app.currentStage);
 }
 
 function resetCustomMap() {
   if (!app.loadedMapSpec) return;
   app.isCustomRun = true;
-  app.selectedCharacter = app.loadedMapSpec.startMode === 'Airplane' ? 'ship' : 'cube';
+  app.selectedCharacter = MODE_BY_CODE[app.loadedMapSpec.startMode]?.id || 'cube';
   app.world = buildCustomWorld(app.loadedMapSpec);
   app.player = createPlayer(app.selectedCharacter, app.world);
   app.cameraX = app.world.startWorldX - app.player.screenX + app.player.w / 2;
+  app.cameraY = Math.min(0, app.player.y - 250);
   app.speedEffect = null;
   app.padTriggers = new Set();
+  app.touchingOrb = null;
   app.stageStartMs = performance.now();
-  app.customAttempts += 1;
+  if (!app.practiceMode) app.customAttempts += 1;
   app.screen = SCREENS.PLAY;
+  setupPractice();
   screenManager.showPlay();
-  screenManager.updateHud({ progress: 0, stage: 'CUSTOM', character: app.selectedCharacter });
+  screenManager.updateHud({ progress: 0, stage: 'CUSTOM', character: app.selectedCharacter, practice: app.practiceMode });
   void playStageMusic(1);
 }
 
@@ -1799,6 +4718,11 @@ function currentWorldProgress() {
 }
 
 function failStage() {
+  if (app.screen !== SCREENS.PLAY) return;
+  if (app.practice?.active) {
+    practiceDeath(); // 연습 모드: 결과 화면 없이 체크포인트에서 다시
+    return;
+  }
   stopStageMusic();
   playSfx('death');
   app.screen = SCREENS.FAIL;
@@ -1811,13 +4735,20 @@ function clearStage() {
   stopStageMusic();
   app.screen = SCREENS.CLEAR;
   const timeTaken = (performance.now() - app.stageStartMs) / 1000;
+  const isPractice = Boolean(app.practice?.active);
   app.clearSummary = {
-    attempts: app.isCustomRun ? app.customAttempts : app.attempts[app.selectedCharacter][app.currentStage],
+    attempts: isPractice
+      ? app.practice.attempts
+      : app.isCustomRun ? app.customAttempts : app.attempts[app.selectedCharacter][app.currentStage],
     timeTaken,
     stageNumber: app.currentStage,
     isLastStage: !app.isCustomRun && app.currentStage >= 4,
     isCustom: app.isCustomRun,
+    isPractice,
+    checkpoints: isPractice ? app.practice.checkpoints.length : 0,
   };
+  if (app.practice) app.practice.active = false;
+  if (app.isCustomRun) app.clearSummary.stageNumber = 'CUSTOM';
   screenManager.showClear(app.clearSummary);
 }
 
@@ -1827,50 +4758,467 @@ function currentSpeed() {
   return app.world.baseSpeed * effect;
 }
 
-function updateCube(dt) {
-  const player = app.player;
-  const jumpVelocity = app.world.recommendedJumpVelocity;
+/* ---------- 게임 모드별 물리 ----------
+   player.gravity: 1 = 아래로 떨어짐, -1 = 위로 떨어짐
+   모든 모드가 중력 방향을 따름 (초록 공점으로 뒤집을 수 있음)
+*/
+const MODE_PHYSICS = {
+  cube: { gravity: CUBE_GRAVITY },
+  robot: { gravity: CUBE_GRAVITY, jump: 430, boostTime: 0.24 },
+  ufo: { gravity: 1600, flap: 480, orb: 620, maxFall: 650 },
+  ball: { gravity: 1500, push: 180, orb: 560, maxSpeed: 800, buffer: 0.12 },
+  spider: { gravity: 1800, orb: 560, maxSpeed: 900 },
+  swing: { gravity: 1500, maxSpeed: 460, orb: 460 },
+  ship: { gravity: SHIP_GRAVITY, maxSpeed: 520 },
+  wave: {},
+};
 
-  if (app.input.justPressed && player.grounded) {
-    player.vy = jumpVelocity;
+function gravityOf(player) {
+  return player.gravity === -1 ? -1 : 1;
+}
+
+// 중력 쪽 표면에 닿으면 착지, 반대쪽 표면은 bumpHead일 때만 막힘 (아니면 박혀서 죽음)
+function resolveSurfaces(player, prevY, dx, { snap = false, bumpHead = true } = {}) {
+  const dir = gravityOf(player);
+  const rect = getPlayerRect();
+  if (player.vy >= 0) {
+    const floor = findFloor(rect, prevY + player.h, dx, snap && dir === 1);
+    if (floor && (dir === 1 || bumpHead || !floor.owner)) {
+      player.y = floor.y - player.h;
+      player.vy = 0;
+      return dir === 1 ? floor : null;
+    }
+  } else {
+    const ceiling = findCeiling(rect, prevY, dx, snap && dir === -1);
+    if (ceiling && (dir === -1 || bumpHead || !ceiling.owner)) {
+      player.y = ceiling.y;
+      player.vy = 0;
+      return dir === -1 ? ceiling : null;
+    }
+  }
+  return null;
+}
+
+function landOn(player, surface) {
+  player.grounded = Boolean(surface);
+  player.groundOwner = surface?.owner || null;
+  return Boolean(surface);
+}
+
+function markJumpFrom(player) {
+  if (player.groundOwner) player.groundOwner.jumped = true; // jump 조건: 이 블록 위에서 점프
+}
+
+function jumpVelocity() {
+  return app.world.recommendedJumpVelocity ?? -610;
+}
+
+function updateCubeMode(dt, dx, prevY) {
+  const player = app.player;
+  const dir = gravityOf(player);
+  const wasGrounded = player.grounded;
+  if (app.input.justPressed) {
+    if (useOrb()) {
+      player.vy = jumpVelocity() * dir;
+      player.grounded = false;
+    } else if (player.grounded) {
+      player.vy = jumpVelocity() * dir;
+      player.grounded = false;
+      markJumpFrom(player);
+      playSfx('click');
+    }
+  }
+  player.vy += MODE_PHYSICS.cube.gravity * dir * dt;
+  player.y += player.vy * dt;
+  const floor = resolveSurfaces(player, prevY, dx, { snap: wasGrounded, bumpHead: false });
+  if (landOn(player, floor)) player.rotation = Math.atan(floor.grad) * dir;
+  else player.rotation += dt * 7 * dir;
+}
+
+// 로봇: 누르고 있는 동안(최대 boostTime) 상승 속도 유지 → 오래 누를수록 높이
+function updateRobotMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.robot;
+  const dir = gravityOf(player);
+  const wasGrounded = player.grounded;
+  if (app.input.justPressed) {
+    if (useOrb()) {
+      player.vy = jumpVelocity() * dir;
+      player.boostTimer = 0;
+      player.grounded = false;
+    } else if (player.grounded) {
+      player.vy = -settings.jump * dir;
+      player.boostTimer = settings.boostTime;
+      player.grounded = false;
+      markJumpFrom(player);
+      playSfx('click');
+    }
+  }
+  if (player.boostTimer > 0 && app.input.pressed) {
+    player.vy = -settings.jump * dir;
+    player.boostTimer -= dt;
+  } else {
+    player.boostTimer = 0;
+    player.vy += settings.gravity * dir * dt;
+  }
+  player.y += player.vy * dt;
+  const floor = resolveSurfaces(player, prevY, dx, { snap: wasGrounded, bumpHead: false });
+  if (landOn(player, floor)) player.boostTimer = 0;
+  player.rotation = floor ? Math.atan(floor.grad) * dir : clamp((player.vy * dir) / 2400, -0.2, 0.2);
+}
+
+// UFO: 클릭할 때마다 공중에서도 짧게 도약
+function updateUfoMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.ufo;
+  const dir = gravityOf(player);
+  const wasGrounded = player.grounded;
+  if (app.input.justPressed) {
+    if (useOrb()) {
+      player.vy = -settings.orb * dir;
+    } else {
+      if (player.grounded) markJumpFrom(player);
+      player.vy = -settings.flap * dir;
+    }
     player.grounded = false;
+  }
+  player.vy += settings.gravity * dir * dt;
+  player.vy = dir === 1 ? Math.min(player.vy, settings.maxFall) : Math.max(player.vy, -settings.maxFall);
+  player.y += player.vy * dt;
+  landOn(player, resolveSurfaces(player, prevY, dx, { snap: wasGrounded && player.vy * dir >= 0, bumpHead: true }));
+  player.rotation = clamp((player.vy * dir) / 1500, -0.3, 0.3);
+}
+
+// 볼: 표면에 닿아 있을 때 클릭하면 중력 반전
+function updateBallMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.ball;
+  const wasGrounded = player.grounded;
+  if (app.input.justPressed) {
+    if (useOrb()) {
+      player.vy = -gravityOf(player) * settings.orb;
+      player.grounded = false;
+      player.flipBuffer = 0;
+    } else {
+      player.flipBuffer = settings.buffer; // 착지 직전에 누른 것도 인정
+    }
+  }
+  if (player.flipBuffer > 0 && player.grounded) {
+    markJumpFrom(player);
+    player.gravity = -gravityOf(player);
+    player.vy = player.gravity * settings.push;
+    player.grounded = false;
+    player.flipBuffer = 0;
     playSfx('click');
   }
-
-  player.vy += 1800 * dt;
+  player.flipBuffer = Math.max(0, (player.flipBuffer || 0) - dt);
+  const dir = gravityOf(player);
+  player.vy = clamp(player.vy + settings.gravity * dir * dt, -settings.maxSpeed, settings.maxSpeed);
   player.y += player.vy * dt;
-  player.rotation += dt * 7;
+  landOn(player, resolveSurfaces(player, prevY, dx, { snap: wasGrounded, bumpHead: true }));
+  player.rotation += (dx / (player.w / 2)) * dir; // 굴러가기
+}
 
-  if (player.y + player.h >= GROUND_Y) {
-    player.y = GROUND_Y - player.h;
-    player.vy = 0;
-    player.grounded = true;
-    player.rotation = 0;
+// 스파이더: 클릭하면 반대쪽 표면으로 순간 이동
+function updateSpiderMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.spider;
+  const wasGrounded = player.grounded;
+  if (app.input.justPressed) {
+    if (useOrb()) {
+      player.vy = -gravityOf(player) * settings.orb;
+      player.grounded = false;
+    } else if (player.grounded) {
+      markJumpFrom(player);
+      const fromY = player.y + player.h / 2;
+      const target = findOppositeSurface(getPlayerRect(), gravityOf(player));
+      player.gravity = -gravityOf(player);
+      if (target) {
+        player.y = player.gravity === -1 ? target.y : target.y - player.h;
+        player.vy = 0;
+        player.grounded = true;
+        player.groundOwner = target.owner || null;
+      } else {
+        player.vy = player.gravity * 1400; // 반대쪽에 표면이 없으면 날아가 버림
+        player.grounded = false;
+      }
+      player.flash = { t: 0.18, fromY, toY: player.y + player.h / 2 };
+      playSfx('click');
+      return; // 순간 이동한 프레임은 물리 계산 생략
+    }
   }
+  const dir = gravityOf(player);
+  player.vy = clamp(player.vy + settings.gravity * dir * dt, -settings.maxSpeed, settings.maxSpeed);
+  player.y += player.vy * dt;
+  landOn(player, resolveSurfaces(player, prevY, dx, { snap: wasGrounded, bumpHead: true }));
+  player.rotation = 0;
+}
 
-  if (player.y > WORLD_HEIGHT + 120 || player.y < -160) {
-    failStage();
-    return;
+// 스윙: 누르고 있으면 중력이 위로, 떼면 아래로
+function updateSwingMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.swing;
+  if (app.input.justPressed && useOrb()) player.vy = -settings.orb;
+  // 초록 공점을 쓰면 위아래가 뒤바뀜 (swingInvert)
+  player.gravity = (app.input.pressed ? -1 : 1) * (player.swingInvert ? -1 : 1);
+  player.vy = clamp(player.vy + settings.gravity * player.gravity * dt, -settings.maxSpeed, settings.maxSpeed);
+  player.y += player.vy * dt;
+  landOn(player, resolveSurfaces(player, prevY, dx, { bumpHead: true }));
+  player.rotation = clamp(player.vy / 520, -0.6, 0.6);
+}
+
+function updateShipMode(dt, dx, prevY) {
+  const player = app.player;
+  const settings = MODE_PHYSICS.ship;
+  const dir = gravityOf(player);
+  if (app.input.justPressed && useOrb()) player.vy = ORB_SHIP_IMPULSE * dir;
+  if (app.input.pressed) player.vy -= (app.world.thrust ?? 1460) * dir * dt;
+  player.vy = clamp(player.vy + settings.gravity * dir * dt, -settings.maxSpeed, settings.maxSpeed);
+  player.y += player.vy * dt;
+  resolveSurfaces(player, prevY, dx, { bumpHead: true });
+  player.grounded = false;
+  player.rotation = clamp((player.vy * dir) / 420, -0.8, 0.8);
+}
+
+// 웨이브: 누르면 대각선 위, 떼면 대각선 아래 (가로 속도와 같은 크기 → 45°)
+function updateWaveMode(dt, dx, prevY) {
+  const player = app.player;
+  const up = app.input.pressed;
+  player.vy = (up ? -1 : 1) * gravityOf(player) * currentSpeed();
+  player.y += player.vy * dt;
+  const sliding = Boolean(resolveSurfaces(player, prevY, dx, { bumpHead: true })) || player.vy === 0;
+  player.grounded = false;
+  player.rotation = sliding ? 0 : ((up ? -1 : 1) * gravityOf(player) * Math.PI) / 4;
+  player.trail = player.trail || [];
+  player.trail.push({ x: app.cameraX + player.screenX, y: player.y + player.h / 2 });
+  if (player.trail.length > 90) player.trail.shift();
+}
+
+const MODE_UPDATERS = {
+  cube: updateCubeMode,
+  robot: updateRobotMode,
+  ufo: updateUfoMode,
+  ball: updateBallMode,
+  spider: updateSpiderMode,
+  swing: updateSwingMode,
+  ship: updateShipMode,
+  wave: updateWaveMode,
+};
+
+// 스파이더 순간 이동 목적지: dir 1이면 위쪽 천장, -1이면 아래쪽 바닥
+function findOppositeSurface(rect, dir) {
+  const x1 = rect.x + 1;
+  const x2 = rect.x + rect.w - 1;
+  let best = null;
+  if (dir === 1) {
+    if (app.world.ceilingY != null && app.world.ceilingY <= rect.y + 1) best = { y: app.world.ceilingY };
+    for (const solid of solidsNear(rect)) {
+      const surface = surfaceUnder(solid.points, x1, x2, 'bottom');
+      if (surface && surface.y <= rect.y + 1 && (!best || surface.y > best.y)) best = { y: surface.y, owner: solid.owner };
+    }
+  } else {
+    const bottom = rect.y + rect.h;
+    if (worldHasGround() && GROUND_Y >= bottom - 1) best = { y: GROUND_Y };
+    for (const solid of solidsNear(rect)) {
+      const surface = surfaceUnder(solid.points, x1, x2, 'top');
+      if (surface && surface.y >= bottom - 1 && (!best || surface.y < best.y)) best = { y: surface.y, owner: solid.owner };
+    }
+  }
+  return best;
+}
+
+// 맵 밖으로 나가면 사망 (기본 맵 위쪽은 막힘)
+function checkPlayerBounds() {
+  const player = app.player;
+  const world = app.world;
+  if (world.custom) {
+    if (player.y > GROUND_Y + 400 || player.y + player.h < world.topLimit) failStage();
+  } else if (world.type === 'ship') {
+    if (player.y <= 0 || player.y + player.h >= WORLD_HEIGHT) failStage();
+  } else if (world.type === 'gravity') {
+    if (player.y + player.h < 0 || player.y > WORLD_HEIGHT) failStage();
+  } else {
+    if (player.y < 0) {
+      player.y = 0;
+      player.vy = Math.max(player.vy, 0);
+    }
+    if (player.y > WORLD_HEIGHT + 120) failStage();
   }
 }
 
-function updateShip(dt) {
-  const player = app.player;
-  if (app.input.pressed) {
-    player.vy -= app.world.thrust * dt;
-  }
-  player.vy += 980 * dt;
-  player.vy = clamp(player.vy, -520, 520);
-  player.y += player.vy * dt;
-  player.rotation = clamp(player.vy / 420, -0.8, 0.8);
+/* ---------- 특수 공점 ----------
+   초록 공점: 중력 반전 · 검은 공점: 중력 방향으로 확 내리꽂힘
+   화살표 공점: 누르고 있는 동안 화살표 방향(-80°~80°)으로 돌진, 떼거나 S블록에 닿으면 멈춤
+*/
+const BLACK_ORB_SPEED = 1100;
+const GREEN_ORB_PUSH = 260;
 
-  if (player.y <= 0 || player.y + player.h >= WORLD_HEIGHT) {
-    failStage();
+// 돌진 각도: 화면 기준 시계 방향 (0° = →, 양수 = 아래쪽, 음수 = 위쪽)
+function signedAngle(angle) {
+  const value = normalizeAngle(angle);
+  return value > 180 ? value - 360 : value;
+}
+
+function clampDashAngle(angle) {
+  return normalizeAngle(clamp(signedAngle(angle), -DASH_ANGLE_LIMIT, DASH_ANGLE_LIMIT));
+}
+
+function flipPlayerGravity(player) {
+  if (player.character === 'swing') {
+    player.swingInvert = !player.swingInvert;
+    player.gravity = -gravityOf(player);
+  } else {
+    player.gravity = -gravityOf(player);
   }
+  player.grounded = false;
+  player.groundOwner = null;
+  player.boostTimer = 0;
+}
+
+// 노란 공점(nextJump)은 각 모드 안에서 처리, 나머지는 여기서
+function useSpecialOrb() {
+  const orb = app.touchingOrb;
+  if (!app.input.justPressed || !orb || orb.type === 'orb') return false;
+  const player = app.player;
+  if (orb.type === 'orbBlack' && player.character === 'wave') return false; // 웨이브는 속도가 고정이라 효과 없음
+  app.padTriggers.add(orb.id);
+  if (orb.owner) orb.owner.jumped = true;
+  app.touchingOrb = null;
+  playSfx('click');
+
+  if (orb.type === 'orbGreen') {
+    flipPlayerGravity(player);
+    player.vy = gravityOf(player) * GREEN_ORB_PUSH;
+  } else if (orb.type === 'orbBlack') {
+    player.vy = gravityOf(player) * BLACK_ORB_SPEED;
+    player.grounded = false;
+    player.boostTimer = 0;
+  } else if (orb.type === 'orbDash') {
+    const angle = signedAngle(clampDashAngle(orb.owner?.rotation || 0));
+    player.dash = { angle, slope: Math.tan((angle * Math.PI) / 180) };
+    player.grounded = false;
+    player.boostTimer = 0;
+  }
+  app.input.justPressed = false; // 같은 클릭으로 점프까지 하지 않도록
+  return true;
+}
+
+function endDash(player) {
+  if (!player.dash) return;
+  player.dash = null;
+  player.vy = 0;
+}
+
+function updateDash(dt, dx, prevY) {
+  const player = app.player;
+  if (!app.input.pressed) {
+    endDash(player);
+    return false;
+  }
+  player.vy = player.dash.slope * currentSpeed();
+  player.y += player.dash.slope * dx;
+  resolveSurfaces(player, prevY, dx, { bumpHead: true });
+  player.grounded = false;
+  player.rotation = (player.dash.angle * Math.PI) / 180;
+  if (player.character === 'wave') {
+    player.trail.push({ x: app.cameraX + player.screenX, y: player.y + player.h / 2 });
+    if (player.trail.length > 90) player.trail.shift();
+  }
+  return true;
+}
+
+function updatePlayerMode(dt, dx, prevY) {
+  const player = app.player;
+  if (player.flash) {
+    player.flash.t -= dt;
+    if (player.flash.t <= 0) player.flash = null;
+  }
+  useSpecialOrb();
+  if (!(player.dash && updateDash(dt, dx, prevY))) {
+    (MODE_UPDATERS[player.character] || updateCubeMode)(dt, dx, prevY);
+  }
+  if (!runStopped()) checkPlayerBounds();
+}
+
+// 커스텀 맵은 높이 쌓인 블록을 따라갈 수 있도록 세로 카메라 사용
+function updateCameraY(dt) {
+  if (!app.world?.custom || !app.player) {
+    app.cameraY = 0;
+    return;
+  }
+  const topMargin = 140;
+  const bottomMargin = 330;
+  const screenY = app.player.y - app.cameraY;
+  let target = app.cameraY;
+  if (screenY < topMargin) target = app.player.y - topMargin;
+  else if (screenY > bottomMargin) target = app.player.y - bottomMargin;
+  target = Math.min(0, target);
+  app.cameraY += (target - app.cameraY) * Math.min(1, dt * 8);
+}
+
+/* ---------- 블록 코드 실행 ---------- */
+function playerGridPosition() {
+  const rect = getPlayerRect();
+  if (!rect) return { x: 0, y: 0 };
+  return {
+    x: Math.round((rect.x / TILE) * 1000) / 1000,
+    y: Math.round(((GROUND_Y - (rect.y + rect.h)) / TILE) * 1000) / 1000,
+  };
+}
+
+// caTp(A, B): 캐릭터 왼쪽 아래를 그리드 (A, B)로
+function teleportPlayer(gridX, gridY) {
+  const player = app.player;
+  if (!player) return;
+  app.cameraX = gridX * TILE - player.screenX + player.w / 2;
+  player.y = GROUND_Y - gridY * TILE - player.h;
+  player.vy = 0;
+  player.grounded = false;
+  player.groundOwner = null;
+}
+
+function isKeyDisabled(source) {
+  const keys = app.world?.disabledKeys;
+  if (!keys || !source) return false;
+  const active = (key) => (keys[key] ?? -Infinity) > app.world.time;
+  return active('all') || active(source);
+}
+
+function reportScriptError(block, error) {
+  const message = error instanceof Error ? error.message : String(error);
+  const text = `${block.kind.tag} (${formatMapNumber(block.x)}, ${formatMapNumber(block.y)}) 코드 오류 · ${message}`;
+  console.warn(text);
+  app.world.scriptErrors.push({ text, until: app.world.time + 6 });
+  if (app.world.scriptErrors.length > 4) app.world.scriptErrors.shift();
+}
+
+function runBlockScripts(dt) {
+  const world = app.world;
+  if (!world?.custom) return;
+  world.time += dt;
+  for (const runtime of world.scripts) {
+    if (runtime.done) continue;
+    try {
+      stepScript(runtime);
+    } catch (error) {
+      runtime.done = true;
+      reportScriptError(runtime.block, error);
+    }
+    if (runStopped()) return; // kill() 등으로 끝남
+  }
+  if (world.listsDirty) rebuildWorldLists(world);
 }
 
 function updateGame(dt) {
   if (app.screen !== SCREENS.PLAY || !app.world || !app.player) {
+    app.input.justPressed = false;
+    return;
+  }
+
+  // 연습 모드: 죽은 뒤 잠깐 멈췄다가 마지막 체크포인트에서 다시
+  if (practiceDead()) {
+    app.practice.respawnTimer -= dt;
+    if (app.practice.respawnTimer <= 0) practiceRespawn();
     app.input.justPressed = false;
     return;
   }
@@ -1882,28 +5230,47 @@ function updateGame(dt) {
     }
   }
 
-  app.cameraX += currentSpeed() * dt;
-
-  if (app.player.character === 'ship') {
-    updateShip(dt);
-  } else {
-    updateCube(dt);
+  // 블록 코드 실행 (커스텀 맵)
+  if (app.world.custom) {
+    runBlockScripts(dt);
+    if (runStopped()) {
+      app.input.justPressed = false;
+      return;
+    }
+    if (isKeyDisabled(app.input.source)) {
+      app.input.pressed = false;
+      app.input.justPressed = false;
+    }
   }
 
-  if (app.screen === SCREENS.PLAY && collidePlayer()) {
+  const dx = currentSpeed() * dt;
+  app.cameraX += dx;
+
+  handleTriggers();
+  const prevY = app.player.y;
+
+  updatePlayerMode(dt, dx, prevY);
+
+  if (!runStopped() && (hitsSolidSide() || hitsHazard())) {
     failStage();
   }
 
-  const progress = currentWorldProgress();
-  screenManager.updateHud({ progress, stage: app.isCustomRun ? 'CUSTOM' : app.currentStage, character: app.player.character });
+  if (!runStopped()) {
+    updateCameraY(dt);
+    const progress = currentWorldProgress();
+    screenManager.updateHud({ progress, stage: app.isCustomRun ? 'CUSTOM' : app.currentStage, character: app.player.character, practice: Boolean(app.practice?.active) });
 
-  if (progress >= 0.995 && app.screen === SCREENS.PLAY) {
-    clearStage();
+    if (progress >= 0.995) {
+      clearStage();
+    } else {
+      updatePracticeCheckpoints(dt);
+    }
   }
 
   app.input.justPressed = false;
 }
 
+/* ---------- 렌더링 ---------- */
 function drawPixelRect(drawCtx, x, y, w, h, color, pixel = 6, accent) {
   drawCtx.fillStyle = color;
   drawCtx.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
@@ -1917,20 +5284,37 @@ function drawPixelRect(drawCtx, x, y, w, h, color, pixel = 6, accent) {
   }
 }
 
+function tracePolygon(drawCtx, points, offsetX) {
+  drawCtx.beginPath();
+  points.forEach((point, index) => {
+    if (index === 0) drawCtx.moveTo(point.x - offsetX, point.y);
+    else drawCtx.lineTo(point.x - offsetX, point.y);
+  });
+  drawCtx.closePath();
+}
+
 function drawGround(drawCtx, theme) {
-  if (app.world?.character === 'ship') {
+  if (!app.world?.custom && app.world?.type === 'ship') {
     drawCtx.fillStyle = 'rgba(255,255,255,0.06)';
     drawCtx.fillRect(0, 0, 960, 8);
     drawCtx.fillRect(0, WORLD_HEIGHT - 8, 960, 8);
     return;
   }
   const groundTop = GROUND_Y;
-  drawPixelRect(drawCtx, 0, groundTop, 960, WORLD_HEIGHT - groundTop, theme.ground, 10, theme.ground2);
+  const groundHeight = WORLD_HEIGHT - groundTop + 400;
+  drawPixelRect(drawCtx, 0, groundTop, 960, groundHeight, theme.ground, 10, theme.ground2);
   drawCtx.fillStyle = theme.glow;
   drawCtx.fillRect(0, groundTop, 960, 6);
   drawCtx.fillStyle = 'rgba(255,255,255,0.08)';
   for (let x = 0; x < 960; x += TILE) {
     drawCtx.fillRect(x, groundTop + ((Math.floor((x + app.cameraX * 0.2) / TILE) % 2) * 8), TILE / 2, 4);
+  }
+  // 볼 · 스파이더 통로의 천장
+  if (!app.world?.custom && app.world?.ceilingY != null) {
+    const ceiling = app.world.ceilingY;
+    drawPixelRect(drawCtx, 0, -400, 960, ceiling + 400, theme.ground, 10, theme.ground2);
+    drawCtx.fillStyle = theme.glow;
+    drawCtx.fillRect(0, ceiling - 6, 960, 6);
   }
 }
 
@@ -1959,123 +5343,128 @@ function drawParallax(drawCtx, theme) {
   }
 }
 
-function drawArrow(drawCtx, x, y, color, direction = 'up') {
-  drawCtx.fillStyle = color;
-  if (direction === 'up') {
-    drawCtx.fillRect(x + 10, y + 8, 8, 16);
-    drawCtx.beginPath();
-    drawCtx.moveTo(x + 14, y);
-    drawCtx.lineTo(x + 28, y + 12);
-    drawCtx.lineTo(x, y + 12);
-    drawCtx.closePath();
-    drawCtx.fill();
-  } else if (direction === 'right') {
-    drawCtx.fillRect(x, y + 9, 20, 8);
-    drawCtx.beginPath();
-    drawCtx.moveTo(x + 30, y + 13);
-    drawCtx.lineTo(x + 18, y + 24);
-    drawCtx.lineTo(x + 18, y + 2);
-    drawCtx.closePath();
-    drawCtx.fill();
-  } else if (direction === 'left') {
-    drawCtx.fillRect(x + 12, y + 9, 20, 8);
-    drawCtx.beginPath();
-    drawCtx.moveTo(x, y + 13);
-    drawCtx.lineTo(x + 12, y + 24);
-    drawCtx.lineTo(x + 12, y + 2);
-    drawCtx.closePath();
-    drawCtx.fill();
+function defaultSprite(key) {
+  return getSpriteCanvas(DEFAULT_DESIGNS[key]);
+}
+
+// 스프라이트를 (cx, cy) 중심, size 크기, rotation(도)으로 그림
+function drawSpriteAt(drawCtx, sprite, cx, cy, w, h, rotation = 0) {
+  if (!rotation) {
+    drawCtx.drawImage(sprite, Math.round(cx - w / 2), Math.round(cy - h / 2), w, h);
+    return;
+  }
+  drawCtx.save();
+  drawCtx.translate(cx, cy);
+  drawCtx.rotate((rotation * Math.PI) / 180);
+  drawCtx.drawImage(sprite, -w / 2, -h / 2, w, h);
+  drawCtx.restore();
+}
+
+// 큰 직사각형은 40px 근처 크기로 나눠서 스프라이트를 타일처럼 깔기
+function drawSpriteTiled(drawCtx, sprite, x, y, w, h) {
+  const cols = Math.max(1, Math.round(w / TILE));
+  const rows = Math.max(1, Math.round(h / TILE));
+  const cellW = w / cols;
+  const cellH = h / rows;
+  for (let row = 0; row < rows; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      drawCtx.drawImage(sprite, Math.round(x + col * cellW), Math.round(y + row * cellH), Math.ceil(cellW), Math.ceil(cellH));
+    }
   }
 }
 
-function drawPads(drawCtx) {
+// 커스텀 맵: 블록마다 8×8 디자인 스프라이트
+function drawDecor(drawCtx) {
+  if (!app.world?.decor) return;
+  app.world.decor.forEach((item) => {
+    const x = item.cx - app.cameraX;
+    if (x < -TILE * 2 || x > 960 + TILE * 2) return;
+    // item = 실행 중인 블록. ghost: 투명도(0~100), 쓴 공점은 흐리게, S블록은 안 보임
+    if (item.type === 'sBlock') return;
+    const used = ORB_BLOCK_TYPES.has(item.type) && app.padTriggers.has(item.id);
+    const alpha = (1 - (item.ghost || 0) / 100) * (used ? 0.3 : 1);
+    if (alpha <= 0) return;
+    drawCtx.globalAlpha = alpha;
+    drawSpriteAt(drawCtx, item.sprite, x, item.cy, TILE, TILE, item.rotation);
+    drawCtx.globalAlpha = 1;
+  });
+}
+
+// 기본 스테이지: 기존 히트박스 크기에 기본 디자인 스프라이트를 맞춰 그림
+function drawProceduralPads(drawCtx) {
   if (!app.world) return;
+  const spriteKey = { jump: 'jumpUp', boost: 'doubleSpeed', slow: 'halfSpeed' };
   app.world.pads.forEach((pad) => {
     const x = pad.x - app.cameraX;
-    if (x < -80 || x > 1040) return;
-
-    if (pad.type === 'jump') {
-      drawPixelRect(drawCtx, x, pad.y, pad.w, pad.h, '#6b69ff', 4, '#a6d7ff');
-      drawArrow(drawCtx, x + 2, pad.y - 14, '#f5fbff', 'up');
-    }
-
-    if (pad.type === 'boost') {
-      drawPixelRect(drawCtx, x, pad.y, pad.w, pad.h, '#53d1ff', 4, '#d6ffff');
-      drawArrow(drawCtx, x + 2, pad.y + 2, '#10304f', 'right');
-      drawArrow(drawCtx, x + 12, pad.y + 2, '#10304f', 'right');
-    }
-
-    if (pad.type === 'slow') {
-      drawPixelRect(drawCtx, x, pad.y, pad.w, pad.h, '#ffd35b', 4, '#fff2a6');
-      drawArrow(drawCtx, x + 4, pad.y + 2, '#654d00', 'left');
+    if (x < -80 || x > 1040 || !spriteKey[pad.type]) return;
+    const sprite = defaultSprite(spriteKey[pad.type]);
+    if (pad.floating) {
+      drawCtx.drawImage(sprite, Math.round(x), Math.round(pad.y), pad.w, pad.h);
+    } else {
+      // 패드 그림이 아래쪽 칸에 있으니 아래에 맞춤
+      drawCtx.drawImage(sprite, Math.round(x), Math.round(pad.y + pad.h - TILE), pad.w, TILE);
     }
   });
 }
 
-function drawObstacles(drawCtx) {
+function drawProceduralObstacles(drawCtx) {
   if (!app.world) return;
   app.world.obstacles.forEach((obstacle) => {
     const x = obstacle.x - app.cameraX;
     if (x + obstacle.w < -60 || x > 1020) return;
     if (obstacle.type === 'block') {
-      drawPixelRect(drawCtx, x, obstacle.y, obstacle.w, obstacle.h, '#355c8f', 6, '#6fd5ff');
-      drawCtx.fillStyle = 'rgba(0,0,0,0.18)';
-      drawCtx.fillRect(x + obstacle.w - 8, obstacle.y, 8, obstacle.h);
-    } else {
-      drawCtx.fillStyle = obstacle.type === 'spikeDown' ? '#ff7a9f' : '#ff9f5d';
-      drawCtx.beginPath();
-      if (obstacle.type === 'spikeDown') {
-        drawCtx.moveTo(x, obstacle.y);
-        drawCtx.lineTo(x + obstacle.w / 2, obstacle.y + obstacle.h);
-        drawCtx.lineTo(x + obstacle.w, obstacle.y);
-      } else {
-        drawCtx.moveTo(x, obstacle.y + obstacle.h);
-        drawCtx.lineTo(x + obstacle.w / 2, obstacle.y);
-        drawCtx.lineTo(x + obstacle.w, obstacle.y + obstacle.h);
-      }
-      drawCtx.closePath();
-      drawCtx.fill();
-      drawCtx.fillStyle = 'rgba(255,255,255,0.25)';
-      drawCtx.fillRect(x + obstacle.w / 2 - 3, obstacle.type === 'spikeDown' ? obstacle.y + obstacle.h / 2 : obstacle.y + obstacle.h / 2, 6, 10);
+      drawSpriteTiled(drawCtx, defaultSprite('dieBlock'), x, obstacle.y, obstacle.w, obstacle.h);
+    } else if (obstacle.type === 'spikeUp' || obstacle.type === 'spikeDown') {
+      drawSpriteAt(drawCtx, defaultSprite('thorn'), x + obstacle.w / 2, obstacle.y + obstacle.h / 2, obstacle.w, obstacle.h,
+        obstacle.type === 'spikeDown' ? 180 : 0);
     }
   });
 }
 
-function drawCube(drawCtx, player) {
-  const px = player.screenX - player.w / 2;
+// 모든 모드 공통: 8×8 스프라이트를 정사각형으로 그림 (히트박스는 모드별 크기)
+function drawPlayer(drawCtx, player) {
+  if (player.character === 'wave' && player.trail?.length > 1) {
+    drawCtx.save();
+    drawCtx.strokeStyle = 'rgba(83, 209, 255, 0.55)';
+    drawCtx.lineWidth = 6;
+    drawCtx.lineJoin = 'round';
+    drawCtx.beginPath();
+    player.trail.forEach((point, index) => {
+      const x = point.x - app.cameraX;
+      if (index === 0) drawCtx.moveTo(x, point.y);
+      else drawCtx.lineTo(x, point.y);
+    });
+    drawCtx.lineTo(player.screenX, player.y + player.h / 2);
+    drawCtx.stroke();
+    drawCtx.restore();
+  }
+  if (player.flash) {
+    // 스파이더 순간 이동 잔상
+    drawCtx.fillStyle = `rgba(255, 94, 126, ${Math.max(0, player.flash.t / 0.18) * 0.5})`;
+    const top = Math.min(player.flash.fromY, player.flash.toY);
+    drawCtx.fillRect(player.screenX - 8, top, 16, Math.abs(player.flash.toY - player.flash.fromY));
+  }
+  const size = Math.max(player.w, player.h) * (player.character === 'wave' ? 1.5 : 1);
   drawCtx.save();
-  drawCtx.translate(px + player.w / 2, player.y + player.h / 2);
+  drawCtx.translate(player.screenX, player.y + player.h / 2);
   drawCtx.rotate(player.rotation);
-  drawPixelRect(drawCtx, -player.w / 2, -player.h / 2, player.w, player.h, '#53d1ff', 6, '#bdf9ff');
-  drawCtx.fillStyle = '#17365f';
-  drawCtx.fillRect(-8, -6, 4, 4);
-  drawCtx.fillRect(4, -6, 4, 4);
-  drawCtx.fillRect(-8, 6, 16, 4);
+  if (player.gravity === -1 && player.character !== 'ball') drawCtx.scale(1, -1); // 거꾸로 붙어 있으면 뒤집어 그림
+  drawCtx.drawImage(defaultSprite(characterSpriteKey(player.character)), -size / 2, -size / 2, size, size);
   drawCtx.restore();
 }
 
-function drawShip(drawCtx, player) {
-  const px = player.screenX - player.w / 2;
-  const py = player.y;
-  drawCtx.save();
-  drawCtx.translate(px + player.w / 2, py + player.h / 2);
-  drawCtx.rotate(player.rotation);
-  drawCtx.fillStyle = '#fefefe';
-  drawCtx.fillRect(-12, -8, 16, 16);
-  drawCtx.fillStyle = '#53d1ff';
-  drawCtx.fillRect(-16, -4, 8, 8);
-  drawCtx.fillStyle = '#ff7a9f';
-  drawCtx.beginPath();
-  drawCtx.moveTo(4, -10);
-  drawCtx.lineTo(18, 0);
-  drawCtx.lineTo(4, 10);
-  drawCtx.closePath();
-  drawCtx.fill();
-  drawCtx.fillStyle = '#ffda67';
-  drawCtx.fillRect(-22, -4, 6, 8);
-  drawCtx.fillStyle = 'rgba(255, 209, 111, 0.45)';
-  drawCtx.fillRect(-28, -2, 8, 4);
-  drawCtx.restore();
+function drawScriptErrors(drawCtx) {
+  const errors = app.world?.scriptErrors?.filter((item) => item.until > app.world.time);
+  if (!errors?.length) return;
+  drawCtx.font = '13px Courier New';
+  errors.forEach((item, index) => {
+    const y = 78 + index * 22;
+    const width = Math.min(940, drawCtx.measureText(item.text).width + 16);
+    drawCtx.fillStyle = 'rgba(60, 8, 24, 0.85)';
+    drawCtx.fillRect(10, y - 15, width, 20);
+    drawCtx.fillStyle = '#ff9bad';
+    drawCtx.fillText(item.text, 18, y);
+  });
 }
 
 function drawStageMeta(drawCtx) {
@@ -2094,6 +5483,7 @@ function render() {
   const scale = worldScale();
   const offset = fieldOffset();
 
+  ctx.imageSmoothingEnabled = false;
   ctx.save();
   ctx.translate(offset.x, offset.y);
   ctx.scale(scale, scale);
@@ -2108,25 +5498,36 @@ function render() {
   };
 
   drawParallax(ctx, theme);
-  drawGround(ctx, theme);
-  drawPads(ctx);
-  drawObstacles(ctx);
 
-  if (app.player) {
-    if (app.player.character === 'ship') {
-      drawShip(ctx, app.player);
-    } else {
-      drawCube(ctx, app.player);
-    }
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(0, 0, 960, WORLD_HEIGHT);
+  ctx.clip();
+  ctx.translate(0, -Math.round(app.cameraY));
+  drawGround(ctx, theme);
+  if (app.world?.custom) {
+    drawDecor(ctx);
+  } else {
+    drawProceduralPads(ctx);
+    drawProceduralObstacles(ctx);
   }
 
+  drawCheckpoints(ctx);
+  if (app.player && !practiceDead()) {
+    drawPlayer(ctx, app.player);
+  }
+  drawPracticeDeath(ctx);
+  ctx.restore();
+
   drawStageMeta(ctx);
+  drawScriptErrors(ctx);
   ctx.restore();
 }
 
 function renderCharacterPreview(canvasEl, character) {
   const previewCtx = canvasEl.getContext('2d');
   previewCtx.setTransform(1, 0, 0, 1, 0, 0);
+  previewCtx.imageSmoothingEnabled = false;
   previewCtx.clearRect(0, 0, canvasEl.width, canvasEl.height);
   const previewScale = canvasEl.width / 180;
   previewCtx.scale(previewScale, previewScale);
@@ -2138,37 +5539,15 @@ function renderCharacterPreview(canvasEl, character) {
   for (let i = 0; i < 6; i += 1) {
     previewCtx.fillRect(18 + i * 26, 26 + (i % 2) * 12, 4, 4);
   }
-
-  if (character === 'ship') {
-    previewCtx.translate(85, 84);
-    previewCtx.rotate(-0.18);
-    previewCtx.fillStyle = '#ffffff';
-    previewCtx.fillRect(-18, -12, 24, 24);
-    previewCtx.fillStyle = '#53d1ff';
-    previewCtx.fillRect(-28, -6, 10, 12);
-    previewCtx.fillStyle = '#ff7a9f';
-    previewCtx.beginPath();
-    previewCtx.moveTo(8, -16);
-    previewCtx.lineTo(34, 0);
-    previewCtx.lineTo(8, 16);
-    previewCtx.closePath();
-    previewCtx.fill();
-    previewCtx.fillStyle = '#ffda67';
-    previewCtx.fillRect(-38, -6, 10, 12);
-  } else {
-    previewCtx.translate(90, 92);
-    drawPixelRect(previewCtx, -28, -28, 56, 56, '#53d1ff', 8, '#bdf9ff');
-    previewCtx.fillStyle = '#17365f';
-    previewCtx.fillRect(-15, -12, 8, 8);
-    previewCtx.fillRect(7, -12, 8, 8);
-    previewCtx.fillRect(-15, 10, 30, 6);
-  }
+  const sprite = defaultSprite(characterSpriteKey(character));
+  previewCtx.drawImage(sprite, 50, 50, 80, 80);
 }
 
 function animate(timestamp) {
   const dt = clamp((timestamp - (app.lastFrameMs || timestamp)) / 1000, 0, 0.033);
   app.lastFrameMs = timestamp;
   updateGame(dt);
+  syncPracticeBar();
   render();
   requestAnimationFrame(animate);
 }
@@ -2177,8 +5556,15 @@ function onPressStart(event) {
   if (event.target instanceof Element && event.target.closest('.pixel-button, .character-card')) {
     unlockAudio();
   }
+  if (event.target instanceof Element && event.target.closest('#practice-bar')) return; // 연습 버튼은 점프 아님
   if (app.screen === SCREENS.PLAY) {
     unlockAudio();
+    const source = event.type === 'keydown' ? 'space' : 'click';
+    if (isKeyDisabled(source)) {
+      event.preventDefault();
+      return; // noKey로 막힌 키
+    }
+    app.input.source = source;
     app.input.pressed = true;
     app.input.justPressed = true;
     event.preventDefault();
@@ -2192,12 +5578,41 @@ function onPressEnd(event) {
   }
 }
 
+/* ---------- 맵 에디터 동작 ---------- */
 function rerenderPodEditor({ keepScroll = true, scrollShiftY = 0 } = {}) {
   const scroller = keepScroll ? screenRoot.querySelector('.editor-grid-scroll') : null;
   const scrollPosition = scroller
     ? { left: scroller.scrollLeft, top: scroller.scrollTop }
     : null;
   screenManager.showPodEditor(app.editor, scrollPosition, scrollShiftY);
+}
+
+// 선택한 도구 → 놓을 블록 정보 (start / 블록 종류 / 코드 블록)
+function editorToolSpec(tool) {
+  const editor = app.editor;
+  if (tool === 'start') return { type: 'start', kindId: null, code: '' };
+  const kind = getEditorKind(editor, tool);
+  if (kind) return { type: kind.type, kindId: kind.id, code: '' };
+  if (String(tool).startsWith('coded:')) {
+    const coded = editor.codedTools.find((item) => `coded:${item.id}` === tool);
+    const codedKind = coded && getEditorKind(editor, coded.kindId);
+    if (codedKind) return { type: codedKind.type, kindId: codedKind.id, code: coded.code };
+  }
+  return null;
+}
+
+function makeEditorBlock(spec, x, y) {
+  const block = {
+    id: app.editor.nextId,
+    type: spec.type,
+    kindId: spec.kindId,
+    x,
+    y,
+    rotation: spec.type !== 'start' ? fixBlockRotation(spec.type, app.editor.placeRotation) : 0,
+    code: spec.code || '',
+  };
+  app.editor.nextId += 1;
+  return block;
 }
 
 function placeEditorBlock(value) {
@@ -2221,27 +5636,112 @@ function placeEditorBlock(value) {
 
   if (occupiedIndex >= 0) {
     app.editor.selectedId = app.editor.blocks[occupiedIndex].id;
-    app.editor.status = '블록을 선택했습니다. 방향 버튼으로 위치를 조정할 수 있습니다.';
+    app.editor.status = '블록을 선택했습니다. 방향 버튼으로 위치를, ROTATE로 각도를 조정할 수 있습니다.';
     rerenderPodEditor();
     return;
   }
 
-  if (app.editor.tool === 'start') {
+  const spec = editorToolSpec(app.editor.tool);
+  if (!spec) return;
+  if (spec.type === 'start') {
     app.editor.blocks = app.editor.blocks.filter((block) => block.type !== 'start');
   }
 
-  const block = {
-    id: app.editor.nextId,
-    type: app.editor.tool,
-    x,
-    y,
-  };
-  app.editor.nextId += 1;
+  const block = makeEditorBlock(spec, x, y);
   app.editor.blocks.push(block);
   app.editor.selectedId = block.id;
   app.editor.exportedCode = '';
-  app.editor.status = `${block.type} 블록을 (${x}, ${y})에 놓았습니다.`;
+  app.editor.status = `${editorBlockTag(app.editor, block)} 블록을 (${x}, ${y})에 놓았습니다.${block.code ? ' (코드 포함)' : ''}`;
   rerenderPodEditor();
+}
+
+// 드래그한 직사각형 영역 채우기 (START 제외, ERASE면 영역 지우기)
+function fillEditorRect(value) {
+  const [x1, y1, x2, y2] = String(value).split(',').map(Number);
+  if (![x1, y1, x2, y2].every(Number.isInteger)) return;
+  const minX = Math.min(x1, x2);
+  const maxX = Math.max(x1, x2);
+  const minY = Math.min(y1, y2);
+  const maxY = Math.max(y1, y2);
+  const inRect = (block) => {
+    const bx = Math.floor(block.x);
+    const by = Math.floor(block.y);
+    return bx >= minX && bx <= maxX && by >= minY && by <= maxY;
+  };
+  const tool = app.editor.tool;
+
+  if (tool === 'start') {
+    app.editor.status = 'START 블록은 드래그로 채울 수 없습니다. 한 칸만 클릭해 주세요.';
+    rerenderPodEditor();
+    return;
+  }
+
+  if (tool === 'erase') {
+    const before = app.editor.blocks.length;
+    app.editor.blocks = app.editor.blocks.filter((block) => !inRect(block));
+    const removed = before - app.editor.blocks.length;
+    if (!app.editor.blocks.some((block) => block.id === app.editor.selectedId)) app.editor.selectedId = null;
+    app.editor.exportedCode = '';
+    app.editor.status = `영역에서 블록 ${removed}개를 지웠습니다.`;
+    rerenderPodEditor();
+    return;
+  }
+
+  const spec = editorToolSpec(tool);
+  if (!spec) return;
+  const occupied = new Set(app.editor.blocks.map((block) => `${Math.floor(block.x)},${Math.floor(block.y)}`));
+  let added = 0;
+  let skipped = 0;
+  for (let y = minY; y <= maxY; y += 1) {
+    for (let x = minX; x <= maxX; x += 1) {
+      if (occupied.has(`${x},${y}`)) {
+        skipped += 1;
+        continue;
+      }
+      app.editor.blocks.push(makeEditorBlock(spec, x, y));
+      added += 1;
+    }
+  }
+  app.editor.selectedId = null;
+  app.editor.exportedCode = '';
+  app.editor.status = `${spec.kindId ? editorKindTag(getEditorKind(app.editor, spec.kindId)) : tool} 블록 ${added}개를 채웠습니다.${skipped ? ` (이미 블록이 있는 ${skipped}칸은 건너뜀)` : ''}`;
+  rerenderPodEditor();
+}
+
+function applyEditorRotation(angle) {
+  const normalized = normalizeAngle(angle);
+  const selected = app.editor.blocks.find((block) => block.id === app.editor.selectedId);
+  app.editor.placeRotation = normalized;
+  if (selected && ROTATABLE_TYPES.has(selected.type)) {
+    selected.rotation = fixBlockRotation(selected.type, normalized);
+    app.editor.exportedCode = '';
+    if (selected.type === 'dashOrb') {
+      const signed = selected.rotation > 180 ? selected.rotation - 360 : selected.rotation;
+      app.editor.status = `화살표 공점 방향 ${formatMapNumber(signed)}° (0° = →, 양수 = 아래쪽, 음수 = 위쪽, -80°~80°까지)`;
+    } else {
+      app.editor.status = `${TYPE_LABELS[selected.type]} 블록을 ${formatMapNumber(normalized)}°로 돌렸습니다. (히트박스도 함께 회전)`;
+    }
+  } else {
+    app.editor.status = `새로 놓을 블록 각도를 ${formatMapNumber(normalized)}°로 정했습니다.`;
+  }
+  rerenderPodEditor();
+}
+
+function rotateEditor(delta) {
+  if (!Number.isFinite(delta)) return;
+  const selected = app.editor.blocks.find((block) => block.id === app.editor.selectedId);
+  const base = selected && ROTATABLE_TYPES.has(selected.type) ? selected.rotation || 0 : app.editor.placeRotation;
+  applyEditorRotation(base + delta);
+}
+
+function setEditorRotation(value) {
+  const angle = Number(value);
+  if (value === '' || value === undefined || !Number.isFinite(angle)) {
+    app.editor.status = '각도에는 숫자를 입력해 주세요.';
+    rerenderPodEditor();
+    return;
+  }
+  applyEditorRotation(angle);
 }
 
 function nudgeSelectedBlock(direction) {
@@ -2279,9 +5779,175 @@ function nudgeSelectedBlock(direction) {
   selected.x = nextX;
   selected.y = nextY;
   if (nextX >= app.editor.cols - 3) app.editor.cols = Math.ceil(nextX) + 40;
-  if (nextY >= app.editor.rows - 3) app.editor.rows = Math.ceil(nextY) + 12;
+  let addedRows = 0;
+  if (nextY >= app.editor.rows - 3) {
+    const newRows = Math.ceil(nextY) + 12;
+    addedRows = newRows - app.editor.rows;
+    app.editor.rows = newRows;
+  }
   app.editor.exportedCode = '';
   app.editor.status = `${selected.type}: (${formatMapNumber(nextX)}, ${formatMapNumber(nextY)})`;
+  rerenderPodEditor({ scrollShiftY: addedRows * EDITOR_CELL });
+}
+
+/* ---------- 픽셀 디자인 편집기 (블록 종류별) ---------- */
+function setEditorKindDesign(kindId, tokens, status) {
+  const editor = app.editor;
+  const kind = getEditorKind(editor, kindId);
+  if (!kind) return;
+  kind.design = tokens;
+  editor.exportedCode = '';
+  editor.design.status = `${status} · 테그 ${editorKindTag(kind)}`;
+}
+
+function handleDesignAction(action, value) {
+  const editor = app.editor;
+  const design = editor.design;
+  if (!getEditorKind(editor, design.kindId)) design.kindId = editor.kinds[0].id;
+  const kind = getEditorKind(editor, design.kindId);
+
+  if (action === 'openDesign') {
+    if (getEditorKind(editor, value)) design.kindId = value;
+    editor.designOpen = true;
+    design.status = '';
+  } else if (action === 'closeDesign') {
+    editor.designOpen = false;
+    const changed = editor.kinds.filter((item) => editorKindTag(item) !== item.type).map(editorKindTag);
+    editor.status = changed.length ? `기본과 다른 디자인 테그: ${changed.join(', ')}` : '모든 블록이 기본 디자인입니다.';
+  } else if (action === 'selectDesignType' && getEditorKind(editor, value)) {
+    design.kindId = value;
+    design.status = `테그 ${editorKindTag(getEditorKind(editor, value))} 디자인을 편집합니다.`;
+  } else if (action === 'setDesignBrush' && ['color', 'transparent', 'empty', 'pick'].includes(value)) {
+    design.brush = value;
+    design.status = {
+      color: '색 브러시: 보이는 픽셀 (히트박스 있음)',
+      transparent: '투명 브러시: 안 보이지만 히트박스가 있는 픽셀',
+      empty: '빈 칸 브러시: 히트박스가 없는 픽셀',
+      pick: '스포이트: 그리드에서 색을 고르세요.',
+    }[value];
+  } else if (action === 'setDesignColor') {
+    const token = normalizePixelToken(value);
+    if (token && token !== EMPTY_PX && token !== TRANSPARENT_PX) {
+      design.color = token;
+      design.brush = 'color';
+      design.status = `색 ${token}`;
+    }
+  } else if (action === 'pickDesignColor' && value) {
+    if (value === EMPTY_PX || value === TRANSPARENT_PX) {
+      design.brush = value === EMPTY_PX ? 'empty' : 'transparent';
+      design.status = value === EMPTY_PX ? '빈 칸을 골랐습니다.' : '투명을 골랐습니다.';
+    } else {
+      design.color = value;
+      design.brush = 'color';
+      design.status = `색 ${value}을(를) 골랐습니다.`;
+    }
+  } else if (action === 'commitDesignPixels' && Array.isArray(value) && value.length === 64) {
+    setEditorKindDesign(kind.id, value, `저장했습니다. 히트박스 ${designHitboxCount(value)}/64`);
+  } else if (action === 'designFillAll') {
+    const token = design.brush === 'transparent' ? TRANSPARENT_PX
+      : design.brush === 'empty' ? EMPTY_PX
+      : design.color;
+    setEditorKindDesign(kind.id, Array(64).fill(token), '전체를 채웠습니다.');
+  } else if (action === 'designClearAll') {
+    setEditorKindDesign(kind.id, Array(64).fill(EMPTY_PX), '전체를 비웠습니다. (히트박스 없음)');
+  } else if (action === 'designReset') {
+    setEditorKindDesign(kind.id, [...DEFAULT_DESIGNS[kind.type]], '기본 디자인으로 되돌렸습니다.');
+  } else if (action === 'toggleDesignHitbox') {
+    design.showHitbox = !design.showHitbox;
+    design.status = design.showHitbox ? '빨간 테두리 = 히트박스가 있는 픽셀' : '';
+  } else if (action === 'newDesignVariant') {
+    const variant = { id: `v${editor.nextKindId}`, type: kind.type, design: [...kind.design], base: false };
+    editor.nextKindId += 1;
+    editor.kinds.push(variant);
+    design.kindId = variant.id;
+    design.status = `${TYPE_LABELS[kind.type]}의 새 종류(★)를 만들었습니다. 픽셀을 바꾸면 테그가 새로 생깁니다.`;
+  } else if (action === 'deleteDesignVariant' && !kind.base) {
+    // 이 종류를 쓰던 블록은 기본 종류로 돌아감
+    editor.blocks.forEach((block) => {
+      if (block.kindId === kind.id) block.kindId = kind.type;
+    });
+    editor.codedTools.forEach((coded) => {
+      if (coded.kindId === kind.id) coded.kindId = kind.type;
+    });
+    if (editor.tool === kind.id) editor.tool = kind.type;
+    editor.kinds = editor.kinds.filter((item) => item.id !== kind.id);
+    design.kindId = kind.type;
+    editor.exportedCode = '';
+    design.status = '종류를 지웠습니다. 쓰던 블록은 기본 디자인으로 바뀌었습니다.';
+  } else if (action === 'applyDesignCode') {
+    try {
+      const text = String(value).trim();
+      const match = text.match(/^design\(\s*([A-Za-z][A-Za-z0-9_]*)\s*,([\s\S]*)\)$/);
+      const body = match ? match[2] : text;
+      const tokens = parseDesignTokens(body);
+      setEditorKindDesign(kind.id, tokens, '디자인 코드를 적용했습니다.');
+    } catch (error) {
+      design.status = error instanceof Error ? error.message : '코드를 적용하지 못했습니다.';
+    }
+  }
+
+  rerenderPodEditor();
+}
+
+/* ---------- 블록 코드 편집기 ---------- */
+function registerCodedTool(kindId, code) {
+  const editor = app.editor;
+  const existing = editor.codedTools.find((coded) => coded.kindId === kindId && coded.code === code);
+  if (existing) return existing;
+  const coded = { id: editor.nextCodedId, kindId, code };
+  editor.nextCodedId += 1;
+  editor.codedTools.push(coded);
+  return coded;
+}
+
+function handleCodeAction(action, value) {
+  const editor = app.editor;
+  const selected = editor.blocks.find((block) => block.id === editor.selectedId);
+
+  if (action === 'openBlockCode') {
+    if (!selected || selected.type === 'start') {
+      editor.status = '코드를 넣을 블록을 먼저 선택하세요. (start 제외)';
+    } else {
+      editor.codeEditor = { blockId: selected.id, draft: selected.code || '', error: '' };
+    }
+  } else if (action === 'cancelBlockCode') {
+    editor.codeEditor = null;
+  } else if (action === 'saveBlockCode' && editor.codeEditor) {
+    const block = editor.blocks.find((item) => item.id === editor.codeEditor.blockId);
+    const code = dedentCode(String(value));
+    editor.codeEditor.draft = String(value);
+    if (!block) {
+      editor.codeEditor = null;
+    } else {
+      try {
+        compileScript(code);
+        block.code = code.trim() ? code : '';
+        editor.codeEditor = null;
+        editor.exportedCode = '';
+        if (block.code) {
+          registerCodedTool(block.kindId, block.code);
+          editor.paletteCategory = 'coded';
+          editor.status = `코드를 저장했습니다. 블록 선택 창의 {} ${editorBlockTag(editor, block)}로 같은 코드 블록을 더 놓을 수 있습니다.`;
+        } else {
+          editor.status = '빈 코드라 코드를 지웠습니다.';
+        }
+      } catch (error) {
+        editor.codeEditor.error = error instanceof Error ? error.message : String(error);
+      }
+    }
+  } else if (action === 'deleteBlockCode' && editor.codeEditor) {
+    const block = editor.blocks.find((item) => item.id === editor.codeEditor.blockId);
+    if (block) block.code = '';
+    editor.codeEditor = null;
+    editor.exportedCode = '';
+    editor.status = '블록 코드를 지웠습니다.';
+  } else if (action === 'removeCodedTool') {
+    const id = Number(value);
+    editor.codedTools = editor.codedTools.filter((coded) => coded.id !== id);
+    if (editor.tool === `coded:${id}`) editor.tool = 'start';
+    editor.status = '코드 블록을 선택 창에서 뺐습니다. (이미 놓은 블록의 코드는 그대로입니다)';
+  }
+
   rerenderPodEditor();
 }
 
@@ -2317,32 +5983,67 @@ function handleScreenAction(action, value) {
     void playMenuMusic();
   }
 
+  if (action === 'togglePaletteCategory' && EDITOR_CATEGORIES.some((category) => category.id === value)) {
+    app.editor.paletteCategory = app.editor.paletteCategory === value ? null : value;
+    rerenderPodEditor();
+  }
+
+  if (action === 'toggleMoveMode') {
+    app.editor.moveMode = !app.editor.moveMode;
+    app.editor.status = app.editor.moveMode
+      ? 'MOVE ON: 그리드를 드래그해서 화면을 옮기세요. 오른쪽 끝이나 위쪽 끝까지 옮기면 맵이 넓어집니다.'
+      : 'MOVE OFF: 화면이 고정됩니다. 클릭으로 한 칸, 드래그로 직사각형을 채웁니다.';
+    rerenderPodEditor();
+  }
+
   if (action === 'expandEditor' && (value === 'right' || value === 'up')) {
     if (value === 'right') {
       app.editor.cols += 40;
+      app.editor.status = '맵을 오른쪽으로 40칸 넓혔습니다.';
       rerenderPodEditor();
     } else {
       const addedRows = 10;
       app.editor.rows += addedRows;
-      rerenderPodEditor({ scrollShiftY: addedRows * 38 });
+      app.editor.status = '맵을 위쪽으로 10칸 넓혔습니다.';
+      rerenderPodEditor({ scrollShiftY: addedRows * EDITOR_CELL });
     }
   }
 
-  if (action === 'setEditorMode' && (value === 'Cube' || value === 'Airplane')) {
+  if (action === 'setEditorMode' && MODE_BY_CODE[value]) {
     app.editor.startMode = value;
     app.editor.exportedCode = '';
     app.editor.status = `${value} 모드로 시작합니다.`;
     rerenderPodEditor();
   }
 
-  if (action === 'selectEditorTool' && EDITOR_TOOLS.some((tool) => tool.type === value)) {
+  if (action === 'selectEditorTool' && (value === 'erase' || editorToolSpec(value))) {
     app.editor.tool = value;
-    app.editor.status = value === 'erase' ? '지울 블록을 선택하세요.' : `${value} 블록을 놓을 칸을 선택하세요.`;
+    app.editor.status = value === 'erase'
+      ? '지울 블록을 누르거나, 드래그해서 영역을 지우세요.'
+      : value === 'start'
+      ? 'START 블록을 놓을 칸을 클릭하세요.'
+      : (() => {
+        const spec = editorToolSpec(value);
+        const tag = editorKindTag(getEditorKind(app.editor, spec.kindId));
+        return `테그 ${tag}${spec.code ? ' (코드 포함)' : ''} 블록을 놓을 칸을 클릭하거나 드래그하세요.`;
+      })();
     rerenderPodEditor();
   }
 
   if (action === 'placeEditorBlock' && value) {
     placeEditorBlock(value);
+  }
+
+  if (action === 'fillEditorRect' && value) {
+    fillEditorRect(value);
+  }
+
+  if (action === 'rotateEditor' && value) {
+    rotateEditor(Number(value));
+  }
+
+  if (action === 'setEditorRotation') {
+    setEditorRotation(value);
   }
 
   if (action === 'toggleFineMove') {
@@ -2367,7 +6068,7 @@ function handleScreenAction(action, value) {
 
   if (action === 'setClearX') {
     const clearX = Math.round(Number(value) * 10) / 10;
-    if (Number.isFinite(clearX) && clearX >= 0) {
+    if (value !== '' && Number.isFinite(clearX) && clearX >= 0) {
       app.editor.clearX = clearX;
       if (clearX >= app.editor.cols - 3) app.editor.cols = Math.ceil(clearX) + 40;
       app.editor.exportedCode = '';
@@ -2386,22 +6087,30 @@ function handleScreenAction(action, value) {
 
   if (action === 'copyMapCode' && app.editor.exportedCode) {
     const code = app.editor.exportedCode;
+    const fallback = () => {
+      app.editor.status = '코드가 선택되었습니다. 직접 복사해 주세요.';
+      rerenderPodEditor();
+      document.getElementById('map-code-output')?.select();
+    };
     const copyPromise = navigator.clipboard?.writeText(code);
     if (!copyPromise) {
-      const output = document.getElementById('map-code-output');
-      output?.select();
-      app.editor.status = '코드가 선택되었습니다. 직접 복사해 주세요.';
-      return;
+      fallback();
+    } else {
+      copyPromise.then(() => {
+        app.editor.status = '맵 코드를 복사했습니다.';
+        rerenderPodEditor();
+      }).catch(fallback);
     }
-    copyPromise.then(() => {
-      app.editor.status = '맵 코드를 복사했습니다.';
-      rerenderPodEditor();
-    }).catch(() => {
-      const output = document.getElementById('map-code-output');
-      output?.select();
-      app.editor.status = '코드가 선택되었습니다. 직접 복사해 주세요.';
-      rerenderPodEditor();
-    });
+  }
+
+  if (action.startsWith('design') || ['openDesign', 'closeDesign', 'selectDesignType', 'setDesignBrush',
+    'setDesignColor', 'pickDesignColor', 'commitDesignPixels', 'toggleDesignHitbox', 'applyDesignCode',
+    'newDesignVariant', 'deleteDesignVariant'].includes(action)) {
+    handleDesignAction(action, value);
+  }
+
+  if (['openBlockCode', 'saveBlockCode', 'cancelBlockCode', 'deleteBlockCode', 'removeCodedTool'].includes(action)) {
+    handleCodeAction(action, value);
   }
 
   if (action === 'loadMapCode') {
@@ -2417,7 +6126,8 @@ function handleScreenAction(action, value) {
     }
   }
 
-  if (action === 'playLoadedMap' && app.loadedMapSpec) {
+  if ((action === 'playLoadedMap' || action === 'practiceLoadedMap') && app.loadedMapSpec) {
+    app.practiceMode = action === 'practiceLoadedMap';
     resetCustomMap();
   }
 
@@ -2428,21 +6138,30 @@ function handleScreenAction(action, value) {
   }
 
   if (action === 'backToMenu') {
+    if (app.practice) app.practice.active = false;
     app.screen = SCREENS.START;
     stopStageMusic();
     screenManager.showStart();
     void playMenuMusic();
   }
 
-  if (action === 'selectCharacter' && value) {
+  if (action === 'selectCharacter' && MODE_BY_ID[value]) {
     app.selectedCharacter = value;
     app.currentStage = 1;
     screenManager.showCharacterSelect({ selectedCharacter: app.selectedCharacter });
   }
 
-  if (action === 'beginRun' || action === 'startGame') {
+  if (action === 'beginRun' || action === 'startGame' || action === 'beginPractice') {
+    app.practiceMode = action === 'beginPractice';
     app.currentStage = 1;
     resetStage(1);
+  }
+
+  // 같은 스테이지를 연습 모드 / 일반 모드로 다시
+  if (action === 'practiceStage' || action === 'playNormal') {
+    app.practiceMode = action === 'practiceStage';
+    if (app.isCustomRun) resetCustomMap();
+    else resetStage(app.currentStage);
   }
 
   if (action === 'retryStage') {
@@ -2482,9 +6201,26 @@ function init() {
 }
 
 // 초기화
+  practiceBar?.querySelectorAll('[data-practice]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const action = button.dataset.practice;
+      if (action === 'add') addManualCheckpoint();
+      else if (action === 'remove') removeLastCheckpoint();
+      else if (action === 'exit') handleScreenAction('backToMenu');
+      button.blur(); // Space가 버튼을 누르지 않도록
+    });
+  });
   window.addEventListener('resize', resizeCanvas);
   window.addEventListener('keydown', (event) => {
+    // 연습 모드 단축키: Z = 체크포인트 추가, X = 마지막 체크포인트 삭제
+    if (practiceActive() && !event.repeat && (event.code === 'KeyZ' || event.code === 'KeyX')) {
+      if (event.code === 'KeyZ') addManualCheckpoint();
+      else removeLastCheckpoint();
+      event.preventDefault();
+      return;
+    }
     if (event.code === 'Space') {
+      if (app.screen !== SCREENS.PLAY) return; // 에디터 입력창 등에서는 Space 정상 동작
       if (!event.repeat) {
         onPressStart(event);
       }
